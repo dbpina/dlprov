@@ -8,8 +8,6 @@ A DL life cycle involves several data transformations, such as performing data p
 
 ## Overview
 
-DLProv is .......
-
 DLProv is developed on top of [DfAnalyzer](https://gitlab.com/ssvitor/dataflow_analyzer) provenance services. It uses the columnar DBMS MonetDB to support online provenance data analysis and to generate W3C PROV-compliant documents. In addition, these provenance documents can be analyzed through graph DBMS such as Neo4j.
 
 ## Software requirements

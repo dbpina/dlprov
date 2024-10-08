@@ -15,7 +15,7 @@ DLProv is developed on top of [DfAnalyzer](https://gitlab.com/ssvitor/dataflow_a
 The following list of software has to be configured/installed for running a DL model training that collects provenance with DLProv.
 
 * [Java](https://java.com/pt-BR/)
-* [MonetDB](http://www.monetdb.org/Documentation/UserGuide/Tutorial)
+* [MonetDB](http://www.monetdb.org/Documentation/UserGuide/Tutorial) and [pymonetdb](https://pypi.org/project/pymonetdb/)
 * [DfAnalyzer](https://github.com/dbpina/keras-prov/tree/main/DfAnalyzer)
 * [dfa-lib-python](https://github.com/dbpina/keras-prov/tree/main/dfa-lib-python/) 
 

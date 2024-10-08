@@ -7,6 +7,10 @@ from .dataset import DataSet
 from .performance import Performance
 from datetime import datetime
 
+from .build_w3c import config
+from .build_w3c import build_provenance_document
+
+
 dfa_url = os.environ.get('DFA_URL',"http://localhost:22000/")
 
 
@@ -46,6 +50,8 @@ class Task(ProvenanceObject):
         self.dfa_url = dfa_url
         self.start_time = None
         self.end_time = None
+        self.w3c = config.w3c
+        self.transformations_number = config.transformations_number
         if isinstance(dependency, Task):
             dependency = Dependency([dependency._tag], [dependency._id])
             self._dependency = dependency.get_specification()
@@ -110,6 +116,8 @@ class Task(ProvenanceObject):
         performance = Performance(self.start_time, self.end_time)
         self._performances.append(performance.get_specification())
         self.save()
+        if(self.get_specification()['id'] == str(self.transformations_number)):
+            self.run_w3c(self.get_specification()['dataflow'], self.get_specification()['exec'])        
         self._sets = []        
 
     def save(self):
@@ -119,3 +127,9 @@ class Task(ProvenanceObject):
         message = self.get_specification()
         r = requests.post(url, json=message)
         print(r.status_code)        
+
+    def run_w3c(self, dataflow_tag, dataflow_execution):
+        if self.w3c:
+            build_provenance_document(dataflow_tag, dataflow_execution, self.w3c)          
+        else:
+            print("Running without W3C mode.")        

@@ -8,6 +8,8 @@ from .attribute_type import AttributeType
 from .set import Set
 from .set_type import SetType
 
+from .build_w3c import config  # Import the config object
+
 dfa_url = os.environ.get('DFA_URL', "http://localhost:22000/")
 
 
@@ -19,10 +21,12 @@ class Dataflow(ProvenanceObject):
         - tag (str): Dataflow tag.
         - transformations (list, optional): Dataflow transformations.
     """
-    def __init__(self, tag, hyperparameters=False, transformations=[]):
+    def __init__(self, tag, predefined=False, w3c=None, transformations=[]):
         ProvenanceObject.__init__(self, tag)
         self.transformations = transformations
-        self.hyperparameters = hyperparameters
+        self.predefined = predefined
+        config.w3c = w3c
+        config.transformations_number = len(self.transformations)
 
     @property
     def transformations(self):
@@ -49,23 +53,45 @@ class Dataflow(ProvenanceObject):
         assert isinstance(transformation, Transformation), \
             "The parameter must must be a transformation."
         self._transformations.append(transformation.get_specification())
+        config.transformations_number = len(self._transformations)
 
     @property
-    def hyperparameters(self):
-        return self._hyperparameters
+    def predefined(self):
+        return self._predefined
 
-    @hyperparameters.setter
-    def hyperparameters(self, hyperparameters):
-        if(hyperparameters == True):
-            assert isinstance(hyperparameters, bool), \
+    @predefined.setter
+    def predefined(self, predefined):
+        if(predefined == True):
+            assert isinstance(predefined, bool), \
                 "The parameter must must be a user."   
-            tf1 = Transformation("TrainingModel")
-            tf1_input = Set("iTrainingModel", SetType.INPUT, 
+            tf1 = Transformation("NormalizeData")
+            tf1_input = Set("iInputDataset", SetType.INPUT, 
+                [Attribute("DATASET_NAME", AttributeType.TEXT), 
+                Attribute("DATASET_SOURCE", AttributeType.TEXT)])
+            tf1_output = Set("oNormalizeData", SetType.OUTPUT, 
+                [Attribute("DATASET_DIR", AttributeType.TEXT)])
+            tf1.set_sets([tf1_input, tf1_output])
+            self.add_transformation(tf1)
+
+            tf2 = Transformation("SplitData")
+            tf2_input = Set("iSplitConfig", SetType.INPUT, 
+                [Attribute("RATIO", AttributeType.NUMERIC)])
+            tf2_train_output = Set("oTrainSet", SetType.OUTPUT, 
+                [Attribute("TrainSet", AttributeType.TEXT)])
+            tf2_test_output = Set("oTestSet", SetType.OUTPUT, 
+                [Attribute("TestSet", AttributeType.TEXT)])
+            tf1_output.set_type(SetType.INPUT)
+            tf1_output.dependency=tf1._tag
+            tf2.set_sets([tf2_input, tf1_output, tf2_train_output, tf2_test_output])
+            self.add_transformation(tf2)
+
+            tf3 = Transformation("TrainModel")
+            tf3_input = Set("iTrainModel", SetType.INPUT, 
                 [Attribute("OPTIMIZER_NAME", AttributeType.TEXT), 
                 Attribute("LEARNING_RATE", AttributeType.NUMERIC),
                 Attribute("NUM_EPOCHS", AttributeType.NUMERIC),
                 Attribute("NUM_LAYERS", AttributeType.NUMERIC)])
-            tf1_output = Set("oTrainingModel", SetType.OUTPUT, 
+            tf3_output = Set("oTrainModel", SetType.OUTPUT, 
                 [Attribute("TIMESTAMP", AttributeType.TEXT), 
                 Attribute("ELAPSED_TIME", AttributeType.TEXT),
                 Attribute("LOSS", AttributeType.NUMERIC),
@@ -73,32 +99,24 @@ class Dataflow(ProvenanceObject):
                 Attribute("VAL_LOSS", AttributeType.NUMERIC),
                 Attribute("VAL_ACCURACY", AttributeType.NUMERIC),                
                 Attribute("EPOCH", AttributeType.NUMERIC)])
-            tf1.set_sets([tf1_input, tf1_output])
-            self.add_transformation(tf1)
+            tf3_output_model = Set("oTrainedModel", SetType.OUTPUT, 
+                [Attribute("MODEL_NAME", AttributeType.TEXT),
+                Attribute("MODEL_DIR", AttributeType.TEXT)])
+            tf2_train_output.set_type(SetType.INPUT)
+            tf2_train_output.dependency=tf2._tag
+            tf3.set_sets([tf2_train_output, tf3_input, tf3_output, tf3_output_model])
+            self.add_transformation(tf3)
 
-            tf2 = Transformation("Adaptation")
-            tf2_input = Set("iAdaptation", SetType.INPUT, 
-                [Attribute("EPOCHS_DROP", AttributeType.NUMERIC), 
-                Attribute("DROP_N", AttributeType.NUMERIC),
-                Attribute("INITIAL_LRATE", AttributeType.NUMERIC)])
-            tf2_output = Set("oAdaptation", SetType.OUTPUT, 
-                [Attribute("NEW_LRATE", AttributeType.NUMERIC),
-                Attribute("TIMESTAMP", AttributeType.TEXT),
-                Attribute("EPOCH_ID", AttributeType.NUMERIC),
-                Attribute("ADAPTATION_ID", AttributeType.NUMERIC)])
-            tf1_output.set_type(SetType.INPUT)
-            tf1_output.dependency=tf1._tag
-            tf2.set_sets([tf1_output, tf2_input, tf2_output])
-            self.add_transformation(tf2)     
-            
-            tf3 = Transformation("TestingModel")
-            tf3_output = Set("oTestingModel", SetType.OUTPUT, 
+            tf4 = Transformation("TestModel")
+            tf4_output = Set("oTestModel", SetType.OUTPUT, 
                 [Attribute("LOSS", AttributeType.NUMERIC),
                 Attribute("ACCURACY", AttributeType.NUMERIC)])
-            tf1_output.set_type(SetType.INPUT)
-            tf1_output.dependency=tf1._tag
-            tf3.set_sets([tf1_output, tf3_output])
-            self.add_transformation(tf3)     
+            tf2_test_output.set_type(SetType.INPUT)
+            tf2_test_output.dependency=tf2._tag
+            tf3_output_model.set_type(SetType.INPUT)
+            tf3_output_model.dependency=tf3._tag
+            tf4.set_sets([tf2_test_output, tf3_output_model, tf4_output])
+            self.add_transformation(tf4)    
 
     def save(self):
         """ Send a post request to the Dataflow Analyzer API to store

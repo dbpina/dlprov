@@ -64,11 +64,11 @@ class Dataflow(ProvenanceObject):
         if(predefined == True):
             assert isinstance(predefined, bool), \
                 "The parameter must must be a user."   
-            tf1 = Transformation("NormalizeData")
+            tf1 = Transformation("LoadData")
             tf1_input = Set("iInputDataset", SetType.INPUT, 
                 [Attribute("DATASET_NAME", AttributeType.TEXT), 
                 Attribute("DATASET_SOURCE", AttributeType.TEXT)])
-            tf1_output = Set("oNormalizeData", SetType.OUTPUT, 
+            tf1_output = Set("oLoadData", SetType.OUTPUT, 
                 [Attribute("DATASET_DIR", AttributeType.TEXT)])
             tf1.set_sets([tf1_input, tf1_output])
             self.add_transformation(tf1)

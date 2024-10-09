@@ -53,7 +53,7 @@ def build_provenance_document(df_tag, df_exec, mode):
     # Create a new PROV document
     w3c_name = ""
     prov_document = ProvDocument()
-    prov_document.add_namespace('dlprov', '')  
+    prov_document.add_namespace('dlprov', 'DLProv')  
 
     dataflow_entity_created = False  # Flag to check if the entity was already created
 
@@ -115,8 +115,8 @@ def build_provenance_document(df_tag, df_exec, mode):
     full_filename = os.path.join(current_directory, f'{w3c_name}.png')
     full_filename_provn = os.path.join(current_directory, f'{w3c_name}.provn')             
 
-    dot = prov_to_dot(prov_document)
-    dot.write_png(full_filename) 
+    dot_file = prov_to_dot(prov_document)
+    dot_file.write_png(full_filename) 
 
     # Serialize the ProvDocument to PROV-N format
     prov_n_content = prov_document.serialize(format='provn')

@@ -52,9 +52,16 @@ class Task(ProvenanceObject):
         self.end_time = None
         self.w3c = config.w3c
         self.transformations_number = config.transformations_number
-        if isinstance(dependency, Task):
+        # if isinstance(dependency, Task):
+        #     dependency = Dependency([dependency._tag], [dependency._id])
+        #     self._dependency = dependency.get_specification()
+        if isinstance(dependency, list):
+            dependency = Dependency([d._tag for d in dependency], [d._id for d in dependency])
+            self._dependency = dependency.get_specification()
+        elif isinstance(dependency, Task):
             dependency = Dependency([dependency._tag], [dependency._id])
             self._dependency = dependency.get_specification()
+
 
     def add_dependency(self, dependency):
         """ Add a dependency to the Task.

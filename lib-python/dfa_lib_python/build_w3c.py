@@ -123,15 +123,9 @@ def build_provenance_document(df_tag, df_exec, mode):
 
     # Save the PROV-N content to a file
     with open(full_filename_provn, 'w') as f:
-        f.write(prov_n_content)
-
-    image_path = "w3c-graph.png"
-    provn_path = "w3c-prov.provn"
-
-    return image_path, provn_path            
+        f.write(prov_n_content)        
 
 def generate_each_execution(df_tag, df_exec, prov_df_exec_activity, cursor, prov_document):            
-    # Get all transformations, i.e. activities
     query_1 = f"SELECT id, tag FROM \"public\".data_transformation WHERE df_id = (SELECT id FROM \"public\".dataflow WHERE tag = '{df_tag}');"
     cursor.execute(query_1)
     items = cursor.fetchall()
@@ -142,7 +136,7 @@ def generate_each_execution(df_tag, df_exec, prov_df_exec_activity, cursor, prov
     tasks = {}
     the_activities = []
     the_activities_dict = {}
-    other_attributes = {}
+    other_attributes = {}    
 
     for dt_id in dt_ids:
         other_attributes["dlprov:dt_tag:"] = dts[dt_id]
@@ -162,9 +156,12 @@ def generate_each_execution(df_tag, df_exec, prov_df_exec_activity, cursor, prov
     items = cursor.fetchall()
     ds_ids, ds_tags = [row[0] for row in items], [row[1] for row in items]
 
-    res = {ds_tags[i]: ds_ids[i] for i in range(len(ds_tags))}
+    res = {ds_tags[i]: ds_ids[i] for i in range(len(ds_tags))}    
 
+    # Create a dictionary to store the prov_entity for each ds_tag
     the_entities = []
+    entities_dict = {}
+
     for ds_tag in ds_tags:
         query = f"SELECT name FROM \"public\".attribute WHERE ds_id = {res[ds_tag]};"
         cursor.execute(query)
@@ -172,60 +169,70 @@ def generate_each_execution(df_tag, df_exec, prov_df_exec_activity, cursor, prov
 
         query = f"SELECT previous_dt_id, next_dt_id FROM \"public\".data_dependency WHERE ds_id = {res[ds_tag]};"
         cursor.execute(query)
-        row = cursor.fetchone()
-        previous_dt_id, next_dt_id = row[0], row[1]
+        rows = cursor.fetchall()  # Fetch all rows
 
+        for row in rows:  # Iterate through each row
+            previous_dt_id, next_dt_id = row[0], row[1]
 
-        # if row:
-        #     previous_dt_id, next_dt_id = row[0], row[1]
-        # else:
-        #     # Set default values if no rows are found
-        #     previous_dt_id, next_dt_id = None, None
+            # Handle None values as needed
+            if previous_dt_id is None:
+                # Handle when previous_dt_id is None
+                pass
 
-        # Handle None values as needed
-        if previous_dt_id is None:
-            # Handle when previous_dt_id is None
-            pass
+            if next_dt_id is None:
+                pass
 
-        if next_dt_id is None:
-            pass
+            # Construct the SELECT clause by joining the attribute names
+            select_clause = ', '.join(attribute_list)
 
+            # Reuse or create a prov_entity for the current ds_tag
+            if ds_tag not in entities_dict:
+                # If no entity exists for this ds_tag, create a new one
+                query = f"SELECT {select_clause} FROM \"{df_tag}\".{ds_tag} WHERE "
+                if previous_dt_id is None and next_dt_id is not None:
+                    query += f"{dts[next_dt_id]}_task_id = {tasks[next_dt_id]};"
+                    my_type = "used"
+                elif previous_dt_id is not None and next_dt_id is None:
+                    query += f"{dts[previous_dt_id]}_task_id = {tasks[previous_dt_id]};"
+                    my_type = "generated"
+                elif previous_dt_id is not None and next_dt_id is not None:
+                    query += f"{dts[previous_dt_id]}_task_id = {tasks[previous_dt_id]} AND {dts[next_dt_id]}_task_id = {tasks[next_dt_id]};"
+                    my_type = "both"
 
-        # Construct the SELECT clause by joining the attribute names
-        select_clause = ', '.join(attribute_list)
+                cursor.execute(query)
+                rows_data = cursor.fetchall()
 
-        if previous_dt_id is None and next_dt_id is not None:
-            query = f"SELECT {select_clause} FROM \"{df_tag}\".{ds_tag} WHERE {dts[next_dt_id]}_task_id = {tasks[next_dt_id]};"
-            my_type = "used"
-            #used
+                # Create a new prov_entity for the ds_tag
+                other_attributes = {}
+                for row_data in rows_data:
+                    entity_id = 'dlprov:' + str(uuid.uuid4())
+                    other_attributes["dlprov:ds_tag"] = ds_tag
+                    for i in range(len(row_data)):
+                        other_attributes["dlprov:" + attribute_list[i] + ":"] = row_data[i]
+                    
+                    # Create the prov_entity and store it in the dictionary
+                    prov_entity = prov_document.entity(entity_id, other_attributes=other_attributes)
+                    entities_dict[ds_tag] = prov_entity
+                    the_entities.append(prov_entity)
 
-        elif previous_dt_id is not None and next_dt_id is None:
-            query = f"SELECT {select_clause} FROM \"{df_tag}\".{ds_tag} WHERE {dts[previous_dt_id]}_task_id = {tasks[previous_dt_id]};"
-            # generated
-            my_type = "generated"
+                    # Add the usage or generation relations
+                    if my_type == "used":
+                        prov_document.used(the_activities_dict[dts[next_dt_id]], prov_entity)
+                    elif my_type == "generated":
+                        prov_document.wasGeneratedBy(prov_entity, the_activities_dict[dts[previous_dt_id]])
+                    elif my_type == "both":
+                        prov_document.used(the_activities_dict[dts[next_dt_id]], prov_entity)
+                        prov_document.wasGeneratedBy(prov_entity, the_activities_dict[dts[previous_dt_id]])
 
-        elif previous_dt_id is not None and next_dt_id is not None:
-            query = f"SELECT {select_clause} FROM \"{df_tag}\".{ds_tag} WHERE {dts[previous_dt_id]}_task_id = {tasks[previous_dt_id]} AND {dts[next_dt_id]}_task_id = {tasks[next_dt_id]};"
-            my_type = "both"
+            else:
+                # If the entity already exists for this ds_tag, reuse it
+                prov_entity = entities_dict[ds_tag]
 
-        cursor.execute(query)
-        # Fetch all rows from the cursor
-        rows = cursor.fetchall()
-        other_attributes = {}
-        
-        #for i in range(len(rows[row])):
-        #        other_attributes["dlprov:" + attribute_list[i]] = rows[row][i]
-        for row in rows:
-            entity_id = 'dlprov:' + str(uuid.uuid4())
-            for i in range(len(row)):
-                other_attributes["dlprov:" + attribute_list[i] + ":"] = row[i]
-            prov_entity = prov_document.entity(entity_id, other_attributes=other_attributes)  
-            the_entities.append(prov_entity)
-
-            if (my_type == "used"):
-                prov_document.used(the_activities_dict[dts[next_dt_id]], prov_entity)
-            elif (my_type == "generated"):
-                prov_document.wasGeneratedBy(prov_entity, the_activities_dict[dts[previous_dt_id]])
-            elif (my_type == "both"):
-                prov_document.used(the_activities_dict[dts[next_dt_id]], prov_entity)
-                prov_document.wasGeneratedBy(prov_entity, the_activities_dict[dts[previous_dt_id]])
+                # Add the usage or generation relations
+                if next_dt_id is not None and previous_dt_id is None:
+                    prov_document.used(the_activities_dict[dts[next_dt_id]], prov_entity)
+                elif previous_dt_id is not None and next_dt_id is None:
+                    prov_document.wasGeneratedBy(prov_entity, the_activities_dict[dts[previous_dt_id]])
+                elif previous_dt_id is not None and next_dt_id is not None:
+                    prov_document.used(the_activities_dict[dts[next_dt_id]], prov_entity)
+                    prov_document.wasGeneratedBy(prov_entity, the_activities_dict[dts[previous_dt_id]])

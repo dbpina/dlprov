@@ -175,18 +175,14 @@ def generate_each_execution(df_tag, df_exec, prov_df_exec_activity, cursor, prov
             previous_dt_id, next_dt_id = row[0], row[1]
 
             # Handle None values as needed
-            if previous_dt_id is None:
-                # Handle when previous_dt_id is None
-                pass
+            if previous_dt_id is None and next_dt_id is None:
+                continue  # Skip if both IDs are None
 
-            if next_dt_id is None:
-                pass
-
-            # Construct the SELECT clause by joining the attribute names
-            select_clause = ', '.join(attribute_list)
-
-            # Reuse or create a prov_entity for the current ds_tag
+            # Reuse or create the entity for the current ds_tag
             if ds_tag not in entities_dict:
+                # Construct the SELECT clause by joining the attribute names
+                select_clause = ', '.join(attribute_list)
+
                 # If no entity exists for this ds_tag, create a new one
                 query = f"SELECT {select_clause} FROM \"{df_tag}\".{ds_tag} WHERE "
                 if previous_dt_id is None and next_dt_id is not None:
@@ -209,30 +205,19 @@ def generate_each_execution(df_tag, df_exec, prov_df_exec_activity, cursor, prov
                     other_attributes["dlprov:ds_tag"] = ds_tag
                     for i in range(len(row_data)):
                         other_attributes["dlprov:" + attribute_list[i] + ":"] = row_data[i]
-                    
+
                     # Create the prov_entity and store it in the dictionary
                     prov_entity = prov_document.entity(entity_id, other_attributes=other_attributes)
-                    entities_dict[ds_tag] = prov_entity
+                    entities_dict[ds_tag] = prov_entity  # Store the entity for reuse
                     the_entities.append(prov_entity)
 
-                    # Add the usage or generation relations
-                    if my_type == "used":
-                        prov_document.used(the_activities_dict[dts[next_dt_id]], prov_entity)
-                    elif my_type == "generated":
-                        prov_document.wasGeneratedBy(prov_entity, the_activities_dict[dts[previous_dt_id]])
-                    elif my_type == "both":
-                        prov_document.used(the_activities_dict[dts[next_dt_id]], prov_entity)
-                        prov_document.wasGeneratedBy(prov_entity, the_activities_dict[dts[previous_dt_id]])
-
-            else:
-                # If the entity already exists for this ds_tag, reuse it
-                prov_entity = entities_dict[ds_tag]
-
-                # Add the usage or generation relations
-                if next_dt_id is not None and previous_dt_id is None:
-                    prov_document.used(the_activities_dict[dts[next_dt_id]], prov_entity)
-                elif previous_dt_id is not None and next_dt_id is None:
-                    prov_document.wasGeneratedBy(prov_entity, the_activities_dict[dts[previous_dt_id]])
-                elif previous_dt_id is not None and next_dt_id is not None:
-                    prov_document.used(the_activities_dict[dts[next_dt_id]], prov_entity)
-                    prov_document.wasGeneratedBy(prov_entity, the_activities_dict[dts[previous_dt_id]])
+            # Reuse the entity
+            prov_entity = entities_dict[ds_tag]
+            # Add the usage or generation relations
+            if my_type == "used":
+                prov_document.used(the_activities_dict[dts[next_dt_id]], prov_entity)
+            elif my_type == "generated":
+                prov_document.wasGeneratedBy(prov_entity, the_activities_dict[dts[previous_dt_id]])
+            elif my_type == "both":
+                prov_document.used(the_activities_dict[dts[next_dt_id]], prov_entity)
+                prov_document.wasGeneratedBy(prov_entity, the_activities_dict[dts[previous_dt_id]])

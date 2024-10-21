@@ -8,8 +8,6 @@ from .attribute_type import AttributeType
 from .set import Set
 from .set_type import SetType
 
-from .build_w3c import config  # Import the config object
-
 dfa_url = os.environ.get('DFA_URL', "http://localhost:22000/")
 
 
@@ -21,12 +19,10 @@ class Dataflow(ProvenanceObject):
         - tag (str): Dataflow tag.
         - transformations (list, optional): Dataflow transformations.
     """
-    def __init__(self, tag, predefined=False, w3c=None, transformations=[]):
+    def __init__(self, tag, predefined=False, transformations=[]):
         ProvenanceObject.__init__(self, tag)
         self.transformations = transformations
         self.predefined = predefined
-        config.w3c = w3c
-        config.transformations_number = len(self.transformations)
 
     @property
     def transformations(self):
@@ -53,7 +49,6 @@ class Dataflow(ProvenanceObject):
         assert isinstance(transformation, Transformation), \
             "The parameter must must be a transformation."
         self._transformations.append(transformation.get_specification())
-        config.transformations_number = len(self._transformations)
 
     @property
     def predefined(self):

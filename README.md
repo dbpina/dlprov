@@ -235,7 +235,7 @@ The <df_tag> or <df_exec> parameters let you select the specific dataflow or exe
 
 ### Output Comparison
 
-That's it - you are all set! Now, you can check the folder `/opt/dlprov/output/` where you will find the provenance document for your experiment, named something like `mnist-<timestamp>`. You can compare it with the example file, `mnist-example`, provided in the same directory. There are `.json`, `.provn`, and `.png` files for review and analysis.
+That's it - you are all set! Now, you can check the folder `/opt/dlprov/generate-prov/output` where you will find the provenance document for your experiment, named something like `mnist-<timestamp>`. You can compare it with the example file, `mnist-example`, provided in the directory `/opt/dlprov/output/`. There are `.json`, `.provn`, and `.png` files for review and analysis.
 
 **To visualize the PNG file, follow these steps:**
 

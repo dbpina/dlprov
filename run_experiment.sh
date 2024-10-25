@@ -37,7 +37,7 @@ fi
 echo "mnist-simple.py completed successfully."
 
 # Generate provenance document
-cd /opt/dlprov/
+cd /opt/dlprov/generate-prov
 
 echo "Running provenance generation..."
 

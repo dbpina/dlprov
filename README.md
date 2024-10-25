@@ -112,7 +112,16 @@ docker exec -it dlprov-container /bin/bash
 
 3. **Run the example**    
 
-Once you are in the container shell, navigate to the folder `/opt/dlprov/`, where you will find a script named `run_experiment.sh`. This script:
+Once you are in the container shell, the first step is to initialize the MonetDB database. This initialization is only required the first time before the experiments. (When running the experiments script, it will only stop and start MonetDB as needed. Note that restore-database.sh deletes all existing data, so use it with caution.)
+
+To start the database, run the following commands:
+
+```
+cd /opt/dlprov/DfAnalyzer
+./restore-database.sh
+```
+
+After that, you navigate to the folder `/opt/dlprov/`, where you will find a script named `run_experiment.sh`. This script:
 
 - Starts the database and the server.
 - Runs an experiment that trains a DL model on the MNIST dataset (with only a few epochs; you can adjust the epoch count as needed).
@@ -122,6 +131,7 @@ Once you are in the container shell, navigate to the folder `/opt/dlprov/`, wher
 To execute the script, use:    
 
 ```
+cd /opt/dlprov/
 ./run_experiment.sh
 ```
 

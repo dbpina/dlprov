@@ -207,7 +207,7 @@ That's it - you are all set! Now, you can check the folder `/opt/dlprov/output/`
 This project is a work in progress. If you encounter any issues, errors, or have suggestions for improvements, please feel free to contact us. We appreciate your feedback as we continue to refine and expand this project. 
 
 
-## Example
+<!-- ## Example
 
 The path `Example` shows how to use DLProv. To run it, the user just needs to run the Python command, as follows: 
 
@@ -246,7 +246,7 @@ t_denseb.add_dataset(t_denseb_output)
 t_denseb.end()
 ```
 
-Both steps, the specification of the transformation and the activity definition follow the definitions of [dfa-lib-python](http://monografias.poli.ufrj.br/monografias/monopoli10026387.pdf) for DfAnalyzer.
+Both steps, the specification of the transformation and the activity definition follow the definitions of [dfa-lib-python](http://monografias.poli.ufrj.br/monografias/monopoli10026387.pdf) for DfAnalyzer. -->
 
 
 ## Presentation Video

@@ -69,7 +69,7 @@ def train_model(t3, dataflow_tag, exec_tag, y, epochs):
 
             epoch_end_time = time.time()
             elapsed_time = epoch_end_time - self.epoch_start_time
-            logs['elapsed_time'] = elapsed_time            
+            logs['elapsed_time'] = float(elapsed_time)
             timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             elapsed_time = logs.get('elapsed_time', 'N/A')
             loss = -9999999 if np.isnan(logs.get('loss', np.nan)) else logs['loss']

@@ -196,6 +196,9 @@ MATCH (n) RETURN n LIMIT 25;
 
 This query will display the complete graph of an execution, allowing you to analyze the relationships and data flow visually.
 
+
+5. **Generate provenance graph for several executions**
+
 If you would like to generate a W3C PROV document for multiple executions of the same DL model (for example, after running two training executions), you can do so by running the following script:
 
 ```

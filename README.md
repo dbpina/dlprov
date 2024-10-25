@@ -258,6 +258,11 @@ MATCH (b:Entity)-[:wasGeneratedBy]->(c:Activity)
 RETURN avg(b.`dlprov:loss`)
 ```
 
+```
+MATCH (b:Entity)-[:wasGeneratedBy]->(c:Activity)
+RETURN avg(toFloat(b.`dlprov:elapsed_time`)) AS avg_elapsed_time
+```
+
 2. **Shortest Path Queries**  
 These queries find the shortest paths from the resulting test metrics to key components in the workflow:  
 - (i) to the data used for model input, tracking data lineage,  

@@ -201,6 +201,16 @@ This query will display the complete graph of an execution, allowing you to anal
 
 That's it - you are all set! Now, you can check the folder `/opt/dlprov/output/` where you will find the provenance document for your experiment, named something like `mnist-<timestamp>`. You can compare it with the example file, `mnist-example`, provided in the same directory. There are `.json`, `.provn`, and `.png` files for review and analysis.
 
+**To visualize the PNG file, follow these steps:**
+
+1. Use the following command to copy the file from the Docker container to your host system:
+```
+docker cp dlprov-container:/opt/dlprov/output/<insert_file_name.png> </host/path/target>
+```
+
+Replace <insert_file_name.png> with the actual name of your PNG file. Replace </host/path/target> with the desired destination path on your host system where you want to save the file.
+
+2. After executing the command, navigate to the specified target directory on your host to view the PNG file.
 
 ### Note
 

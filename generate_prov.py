@@ -7,6 +7,41 @@ import sys
 import json
 import argparse
 
+import re
+from provdbconnector import ProvDb
+from provdbconnector import Neo4jAdapter
+from neo4j import GraphDatabase
+
+# Environment variables for Neo4j credentials and connection
+NEO4J_USER = os.environ.get('NEO4J_USERNAME', 'neo4j')
+NEO4J_PASS = os.environ.get('NEO4J_PASSWORD', 'neo4jneo4j')
+NEO4J_HOST = os.environ.get('NEO4J_HOST', 'localhost')
+NEO4J_BOLT_PORT = os.environ.get('NEO4J_BOLT_PORT', '7687')
+
+# Auth information for connecting to Neo4j
+auth_info = {
+    "user_name": NEO4J_USER,
+    "user_password": NEO4J_PASS,
+    "host": f"{NEO4J_HOST}:{NEO4J_BOLT_PORT}"
+}
+
+# Neo4j driver setup
+driver = GraphDatabase.driver(f"bolt://{NEO4J_HOST}:{NEO4J_BOLT_PORT}", auth=(NEO4J_USER, NEO4J_PASS))
+
+# ProvDb setup using the Neo4jAdapter
+prov_api = ProvDb(adapter=Neo4jAdapter, auth_info=auth_info)
+
+# Function to test the connection to Neo4j
+def test_connection():
+    try:
+        with driver.session() as session:
+            session.run("RETURN 1")  # Simple query to test the connection
+        print("Connection to Neo4j was successful.")
+        return True
+    except Exception as e:
+        print(f"Error: Unable to connect to Neo4j - {e}")
+        return False
+
 def main():
     parser = argparse.ArgumentParser(description="Generate W3C document")
 
@@ -57,7 +92,18 @@ def main():
 
     prov_n_content = prov_document.serialize(format='provn')
     with open(full_filename_provn, 'w') as f:
-        f.write(prov_n_content)        
+        f.write(prov_n_content)   
+
+    # Test the connection to Neo4j before proceeding
+    if not test_connection():
+        exit(1)  # Exit the program if the connection fails
+
+    # Save the PROV document to Neo4j using the default database
+    document_id = prov_api.save_document(prov_document)
+    print(f"Document saved with ID: {document_id}")
+
+    # Close the Neo4j driver
+    driver.close()        
 
     prov_n_content = prov_document.serialize(format='json')
     with open(full_filename_json, 'w') as f:

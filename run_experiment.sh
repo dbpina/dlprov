@@ -12,14 +12,6 @@ monetdbd stop data || { echo "Failed to stop MonetDB"; exit 1; }
 monetdbd start data || { echo "Failed to start MonetDB"; exit 1; }
 monetdb start dataflow_analyzer || { echo "Failed to start the dataflow_analyzer database"; exit 1; }
 
-# Restore Neo4j database
-python restore_neo4j.py
-if [ $? -ne 0 ]; then
-    echo "Error: Failed to restore neo4j database."
-    exit 1
-fi
-echo "Neo4j was restored."
-
 # Start the DfAnalyzer server
 echo "Starting the .jar file (server)..."
 /opt/jdk1.8.0_66/bin/java -jar target/DfAnalyzer-1.0.jar &
@@ -46,6 +38,14 @@ echo "mnist-simple.py completed successfully."
 
 # Generate provenance document
 cd /opt/dlprov/generate-prov
+
+# Restore Neo4j database
+python restore_neo4j.py
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to restore neo4j database."
+    exit 1
+fi
+echo "Neo4j was restored."
 
 echo "Running provenance generation..."
 

@@ -91,7 +91,7 @@ We provide a pre-built Docker container image that includes all necessary depend
 
 To get started, pull the pre-built Docker image from the container registry:
 
-   ```bash
+   ```
    docker pull dbpina/dlprov
     ```
 
@@ -99,14 +99,14 @@ To get started, pull the pre-built Docker image from the container registry:
 
 Once the image is downloaded, run the container with:    
 
-   ```bash
+   ```
    docker run -p 7474:7474 -p 7687:7687 -p 22000:22000 -d \
   -e NEO4J_dbms_default__listen__address=0.0.0.0 \
   -e NEO4J_dbms_connector_http_listen__address=0.0.0.0 \
   --name dlprov-container dlprov
     ```    
 
-   ```bash
+   ```
    docker exec -it dlprov-container /bin/bash
     ```
 
@@ -121,7 +121,7 @@ Once you are in the container shell, navigate to the folder `/opt/dlprov/`, wher
 
 To execute the script, use:    
 
-   ```bash
+   ```
    ./run_experiment.sh
     ```
 
@@ -131,52 +131,52 @@ To execute the script, use:
 
 To submit queries to MonetDB, connect to the database using the following command:
 
-```bash
+```
 mclient -u monetdb -d dataflow_analyzer
 ```
 
 
 The default password is `monetdb`. Once connected, you can submit queries such as:
 
-```bash SELECT * FROM dataflow;
+``` SELECT * FROM dataflow;
 ```
 
-```bash SELECT * FROM dataflow_execution; (This will show the execution identifier.)
+``` SELECT * FROM dataflow_execution; (This will show the execution identifier.)
 ``` 
 
 To analyze data related to the training process, switch to the schema with:
 
-```bash SET SCHEMA "mnist";
+``` SET SCHEMA "mnist";
 ```
 
 Then, to view available tables, use:
 
-```bash \d
+``` \d
 ```
 
 For specific data, you can submit queries like:
 
-```bash SELECT * FROM itrainmodel; to see the hyperparameters.
+``` SELECT * FROM itrainmodel; to see the hyperparameters.
 ```
 
-```bash SELECT * FROM otrainmodel; to view training metrics.
+``` SELECT * FROM otrainmodel; to view training metrics.
 ```
 
-```bash SELECT * FROM otestmodel; to see test metrics.
+``` SELECT * FROM otestmodel; to see test metrics.
 ```
 
 #### Submitting Queries to Neo4j
 
 To interact with Neo4j, open the following address in your browser:
 
-```bash http://localhost:7474
+``` http://localhost:7474
 ```
 
 Note: This is why the docker run command includes the -p (publish) flag to make ports available externally.
 
 In Neo4j, you can submit queries such as:
 
-```bash MATCH (n) RETURN n LIMIT 25;
+``` MATCH (n) RETURN n LIMIT 25;
 ```
 
 This query will display the complete graph of an execution, allowing you to analyze the relationships and data flow visually.

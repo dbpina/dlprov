@@ -115,9 +115,9 @@ def train_model(t3, dataflow_tag, exec_tag, y, epochs):
                   loss='sparse_categorical_crossentropy',
                   metrics=['accuracy']) 
 
-    model.fit(x_train, y_train, epochs=2, validation_split=0.2, callbacks=callbacks)   
+    model.fit(x_train, y_train, epochs=epochs, validation_split=0.2, callbacks=callbacks)   
 
-    trained_path = os.path.join(os.getcwd(), "trainedmodel.keras")
+    trained_path = os.path.join(os.getcwd(), "mnist-trained.keras")
     model.save(trained_path)
 
     tf3_output_model = DataSet("oTrainedModel", [Element(["trained_model", str(trained_path)])])

@@ -138,7 +138,7 @@ def evaluate_model(t4, dataflow_tag, exec_tag, y, x):
     return test_acc    
 
 def main():
-    epochs = 10
+    epochs = 2
     
     dataflow_tag = "mnist"    
 

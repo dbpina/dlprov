@@ -123,7 +123,7 @@ def generate_each_execution(df_tag, df_exec, prov_df_exec_activity, cursor, prov
     other_attributes = {}    
 
     for dt_id in dt_ids:
-        other_attributes["dlprov:dt_tag:"] = dts[dt_id]
+        other_attributes["dlprov:dt_tag"] = dts[dt_id]
         activity_id = 'dlprov:' + str(uuid.uuid4())
         prov_activity = prov_document.activity(activity_id, other_attributes=other_attributes)
         the_activities.append(prov_activity)
@@ -190,7 +190,7 @@ def generate_each_execution(df_tag, df_exec, prov_df_exec_activity, cursor, prov
                     entity_id = 'dlprov:' + str(uuid.uuid4())
                     other_attributes["dlprov:ds_tag"] = ds_tag
                     for i in range(len(row_data)):
-                        other_attributes["dlprov:" + attribute_list[i] + ":"] = row_data[i]
+                        other_attributes["dlprov:" + attribute_list[i]] = row_data[i]
 
                     # Create the prov_entity and store it in the dictionary
                     prov_entity = prov_document.entity(entity_id, other_attributes=other_attributes)
@@ -212,8 +212,8 @@ def generate_each_execution(df_tag, df_exec, prov_df_exec_activity, cursor, prov
 def generate_w3c_for_all_runs(df_tag, cursor, prov_document):
     dataflow_entity_id = 'dlprov:' + str(uuid.uuid4())
     dataflow_attributes = {
-        "prov:type:": "prov:Plan",
-        "dlprov:tag:": df_tag
+        "prov:type": "prov:Plan",
+        "dlprov:tag": df_tag
     }
     prov_dataflow_entity = prov_document.entity(dataflow_entity_id, other_attributes=dataflow_attributes)
 
@@ -223,7 +223,7 @@ def generate_w3c_for_all_runs(df_tag, cursor, prov_document):
 
     for exec_tag in df_execs:  
         df_exec_activity_id = 'dlprov:' + str(uuid.uuid4())
-        df_exec_attributes = {"dlprov:exec_tag:": exec_tag}
+        df_exec_attributes = {"dlprov:exec_tag": exec_tag}
         prov_df_exec_activity = prov_document.activity(df_exec_activity_id, other_attributes=df_exec_attributes)
 
         prov_document.used(prov_df_exec_activity, prov_dataflow_entity)
@@ -237,13 +237,13 @@ def generate_w3c_for_specific_execution(df_exec, cursor, prov_document):
 
     dataflow_entity_id = 'dlprov:' + str(uuid.uuid4())
     dataflow_attributes = {
-        "prov:type:": "prov:Plan",
-        "dlprov:tag:": df_tag
+        "prov:type": "prov:Plan",
+        "dlprov:tag": df_tag
     }
     prov_dataflow_entity = prov_document.entity(dataflow_entity_id, other_attributes=dataflow_attributes)
 
     df_exec_activity_id = 'dlprov:' + str(uuid.uuid4())
-    df_exec_attributes = {"dlprov:exec_tag:": df_exec}
+    df_exec_attributes = {"dlprov:exec_tag": df_exec}
     prov_df_exec_activity = prov_document.activity(df_exec_activity_id, other_attributes=df_exec_attributes)
 
     prov_document.used(prov_df_exec_activity, prov_dataflow_entity)

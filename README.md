@@ -91,24 +91,24 @@ We provide a pre-built Docker container image that includes all necessary depend
 
 To get started, pull the pre-built Docker image from the container registry:
 
-   ```
-   docker pull dbpina/dlprov
-    ```
+```
+docker pull dbpina/dlprov
+```
 
 2. **Run the Container**
 
 Once the image is downloaded, run the container with:    
 
-   ```
-   docker run -p 7474:7474 -p 7687:7687 -p 22000:22000 -d \
+```
+docker run -p 7474:7474 -p 7687:7687 -p 22000:22000 -d \
   -e NEO4J_dbms_default__listen__address=0.0.0.0 \
   -e NEO4J_dbms_connector_http_listen__address=0.0.0.0 \
   --name dlprov-container dlprov
-    ```    
+```    
 
-   ```
-   docker exec -it dlprov-container /bin/bash
-    ```
+```
+docker exec -it dlprov-container /bin/bash
+```
 
 3. **Run the example**    
 

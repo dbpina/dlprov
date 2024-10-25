@@ -196,6 +196,29 @@ MATCH (n) RETURN n LIMIT 25;
 
 This query will display the complete graph of an execution, allowing you to analyze the relationships and data flow visually.
 
+If you would like to generate a W3C PROV document for multiple executions of the same DL model (for example, after running two training executions), you can do so by running the following script:
+
+```
+./run_df_experiment.sh
+```
+
+This script first restores the Neo4j database, as the current Neo4j version only supports one active database. After the restoration, it generates the provenance document and inserts it into Neo4j, allowing you to analyze the provenance data using the commands previously provided.
+
+
+Note: Typically, a scientist can generate a provenance document for a specific dataflow or its executions by running one of the following commands:
+
+```
+python /generate-prov/generate_prov.py --df_tag <df_tag>
+```
+
+or
+
+```
+python /generate-prov/generate_prov.py --df_exec <df_exec>
+```
+
+The <df_tag> or <df_exec> parameters let you select the specific dataflow or execution for provenance generation. However, for this proof-of-concept, we assume that only the mnist dataflow is available.
+ 
 
 ### Output Comparison
 

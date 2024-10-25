@@ -12,6 +12,9 @@ monetdbd stop data || { echo "Failed to stop MonetDB"; exit 1; }
 monetdbd start data || { echo "Failed to start MonetDB"; exit 1; }
 monetdb start dataflow_analyzer || { echo "Failed to start the dataflow_analyzer database"; exit 1; }
 
+# Generate provenance document
+cd /opt/dlprov/generate-prov
+
 # Restore Neo4j database
 python restore_neo4j.py
 if [ $? -ne 0 ]; then
@@ -19,9 +22,6 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 echo "Neo4j was restored."
-
-# Generate provenance document
-cd /opt/dlprov/generate-prov
 
 echo "Running provenance generation..."
 
@@ -40,7 +40,5 @@ else
     echo "Error executing the script."
     exit 1
 fi
-
-killall monetdbd
 
 echo "Experiment completed!"

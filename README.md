@@ -248,6 +248,45 @@ Replace <insert_file_name.png> with the actual name of your PNG file. Replace </
 
 2. After executing the command, navigate to the specified target directory on your host to view the PNG file.
 
+### Additional Queries in Neo4j
+
+1. **Average Training Loss Query**  
+This query calculates the average loss for the training activity, providing insights into model performance over training iterations. Other metrics, such as elapsed time, can also be used in place of loss to analyze different aspects of the training process.
+
+```
+MATCH (b:Entity)-[:wasGeneratedBy]->(c:Activity)
+RETURN avg(b.`dlprov:loss`)
+```
+
+2. **Shortest Path Queries**  
+These queries find the shortest paths from the resulting test metrics to key components in the workflow:  
+- (i) to the data used for model input, tracking data lineage,  
+- (ii) to the activity responsible for generating these metrics, helping trace back to the source of the results.
+
+```
+MATCH p = shortestPath(
+    (a:Entity {`dlprov:ds_tag`: 'otestmodel'})-[*]-
+    (b:Entity {`dlprov:ds_tag`: 'oloaddata'})
+)
+RETURN p
+```
+
+```
+MATCH p = shortestPath(
+    (a:Entity {`dlprov:ds_tag`: 'otestmodel'})-[:wasGeneratedBy]-
+    (b:Activity {`dlprov:dt_tag`: 'testmodel'})
+)
+RETURN p
+```
+
+3. **Complete Path Query**  
+This query presents the full path from the resulting test metrics to the original input dataset, detailing each step in the data processing pipeline. Information about the dataset source and intermediate transformations is included to support data traceability.
+
+```
+MATCH p = (a:Entity {`dlprov:ds_tag`: 'otestmodel'})-[*]-(b:Entity {`dlprov:ds_tag`: 'iinputdataset'})
+RETURN p
+```
+
 ### Note
 
 This project is a work in progress. If you encounter any issues, errors, or have suggestions for improvements, please feel free to contact us. We appreciate your feedback as we continue to refine and expand this project. 

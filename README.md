@@ -121,9 +121,9 @@ Once you are in the container shell, navigate to the folder `/opt/dlprov/`, wher
 
 To execute the script, use:    
 
-   ```
-   ./run_experiment.sh
-    ```
+```
+./run_experiment.sh
+```
 
 4. **Submit a query**
 
@@ -138,45 +138,60 @@ mclient -u monetdb -d dataflow_analyzer
 
 The default password is `monetdb`. Once connected, you can submit queries such as:
 
-``` SELECT * FROM dataflow;
+```
+SELECT * FROM dataflow;
 ```
 
-``` SELECT * FROM dataflow_execution; (This will show the execution identifier.)
-``` 
+```
+SELECT * FROM dataflow_execution; (This will show the execution identifier.)
+```
 
 To analyze data related to the training process, switch to the schema with:
 
-``` SET SCHEMA "mnist";
+```
+SET SCHEMA "mnist";
 ```
 
 Then, to view available tables, use:
 
-``` \d
+```
+\d
 ```
 
 For specific data, you can submit queries like:
 
-``` SELECT * FROM itrainmodel; to see the hyperparameters.
+```
+SELECT * FROM itrainmodel; to see the hyperparameters.
 ```
 
-``` SELECT * FROM otrainmodel; to view training metrics.
+```
+SELECT * FROM otrainmodel; to view training metrics.
 ```
 
-``` SELECT * FROM otestmodel; to see test metrics.
+```
+SELECT * FROM otestmodel; to see test metrics.
 ```
 
 #### Submitting Queries to Neo4j
 
 To interact with Neo4j, open the following address in your browser:
 
-``` http://localhost:7474
+```
+http://localhost:7474
 ```
 
 Note: This is why the docker run command includes the -p (publish) flag to make ports available externally.
 
+You may need to enter your credentials to access Neo4j. The default configuration is set with the following:
+
+- Username: neo4j
+- Password: neo4jneo4j
+
+
 In Neo4j, you can submit queries such as:
 
-``` MATCH (n) RETURN n LIMIT 25;
+```
+MATCH (n) RETURN n LIMIT 25;
 ```
 
 This query will display the complete graph of an execution, allowing you to analyze the relationships and data flow visually.

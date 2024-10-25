@@ -153,7 +153,6 @@ def main():
     t4 = Task(4, dataflow_tag, exec_tag, "TestModel", dependency = [t2,t3])         
     
     data = load_data(t1, t2, dataflow_tag, exec_tag, "mnist")
-    model_path = os.path.join(os.getcwd(), "mnist-model.keras")
     trained_model_path = train_model(t3, dataflow_tag, exec_tag, data, epochs)
     test_accuracy = evaluate_model(t4, dataflow_tag, exec_tag, data, trained_model_path)
     print(f"Test accuracy: {test_accuracy}")

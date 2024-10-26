@@ -103,7 +103,7 @@ Once the image is downloaded, run the container with:
 docker run -p 7474:7474 -p 7687:7687 -p 22000:22000 -d \
   -e NEO4J_dbms_default__listen__address=0.0.0.0 \
   -e NEO4J_dbms_connector_http_listen__address=0.0.0.0 \
-  --name dlprov-container dlprov
+  --name dlprov-container dbpina/dlprov
 ```    
 
 ```
@@ -218,7 +218,7 @@ If you would like to generate a W3C PROV document for multiple executions of the
 This script first restores the Neo4j database, as the current Neo4j version only supports one active database. After the restoration, it generates the provenance document and inserts it into Neo4j, allowing you to analyze the provenance data using the commands previously provided.
 
 
-Note: Typically, a scientist can generate a provenance document for a specific dataflow or its executions by running one of the following commands:
+<!-- Note: Typically, a scientist can generate a provenance document for a specific dataflow or its executions by running one of the following commands:
 
 ```
 python /generate-prov/generate_prov.py --df_tag <df_tag>
@@ -230,7 +230,7 @@ or
 python /generate-prov/generate_prov.py --df_exec <df_exec>
 ```
 
-The <df_tag> or <df_exec> parameters let you select the specific dataflow or execution for provenance generation. However, for this proof-of-concept, we assume that only the mnist dataflow is available.
+The <df_tag> or <df_exec> parameters let you select the specific dataflow or execution for provenance generation. However, for this proof-of-concept, we assume that only the mnist dataflow is available. -->
  
 
 ### Output Comparison
@@ -339,9 +339,9 @@ t_denseb.end()
 Both steps, the specification of the transformation and the activity definition follow the definitions of [dfa-lib-python](http://monografias.poli.ufrj.br/monografias/monopoli10026387.pdf) for DfAnalyzer. -->
 
 
-## Presentation Video
+<!-- ## Presentation Video
 
-To watch the video, please, click [here](https://www.youtube.com/watch?v=QOZY2CQfXJ8).
+To watch the video, please, click [here](https://www.youtube.com/watch?v=QOZY2CQfXJ8). -->
 
 
 ## Publications

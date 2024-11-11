@@ -4,3 +4,4 @@ DfAnalyzer/*
 # Allow the target folder inside DfAnalyzer
 !DfAnalyzer/target
 
+YOUR-FILE-WITH-SENSITIVE-DATA

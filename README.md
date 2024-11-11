@@ -23,6 +23,8 @@ The following list of software has to be configured/installed for running a DL m
 * [DfAnalyzer](https://github.com/dbpina/keras-prov/tree/main/DfAnalyzer)
 * [dfa-lib-python](https://github.com/dbpina/keras-prov/tree/main/dfa-lib-python/) 
 
+**This repository provides a Docker container, which can be found in step Running an Example in a Docker Environment.**
+
 <!-- ## Installation -->
 
 <!---### RESTful services -->
@@ -53,6 +55,19 @@ cd DfAnalyzer
 ./start-dfanalyzer.sh
 
 ``` -->
+
+## Downloading Large File Due to Git LFS Restrictions
+
+Due to Git LFS (Large File Storage) restrictions, this repository includes a file that cannot be tracked by Git. Please follow these steps to download and add the file manually:
+
+1. Download the file from [this Google Drive link](https://drive.google.com/drive/folders/1J2KGXIe8Vb1z0WLuV1cCKDFBsxbOs9R2?usp=share_link).
+
+
+2. After downloading the file, move it to the `dlprov/DfAnalyzer/target` folder in the repository.
+
+3. Once the file is in the correct folder, you can continue with the setup or use the repository as intended.
+
+**Note**: If you are using the provided Docker container, this step is not required, as the necessary files will be automatically handled within the container.
 
 ## How to instrument a DL model
 

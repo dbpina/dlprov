@@ -12,6 +12,8 @@ A DL life cycle involves several data transformations, such as performing data p
 
 DLProv is developed on top of [DfAnalyzer](https://gitlab.com/ssvitor/dataflow_analyzer) provenance services. It uses the columnar DBMS MonetDB to support online provenance data analysis and to generate W3C PROV-compliant documents. In addition, these provenance documents can be analyzed through graph DBMS such as Neo4j.
 
+**This repository provides a Docker container for DLProv, which can be found in step [Running an Example in a Docker Environment](#running-an-example-in-a-docker-environment).**
+
 ## Software requirements
 
 The following list of software has to be configured/installed for running a DL model training that collects provenance with DLProv.
@@ -23,7 +25,6 @@ The following list of software has to be configured/installed for running a DL m
 * [DfAnalyzer](https://github.com/dbpina/keras-prov/tree/main/DfAnalyzer)
 * [dfa-lib-python](https://github.com/dbpina/keras-prov/tree/main/dfa-lib-python/) 
 
-**This repository provides a Docker container, which can be found in step [Running an Example in a Docker Environment](#running-an-example-in-a-docker-environment).**
 
 <!-- ## Installation -->
 

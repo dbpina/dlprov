@@ -1,5 +1,7 @@
 # DLProv
 
+This project, called DLProv, is part of my DSc research in the Program of Systems and Computer Science (PESC), COPPE, at the Federal University of Rio de Janeiro (UFRJ).
+
 DLProv is a service that evolved from [DNNProv](https://github.com/dbpina/dnnprov). Originally rooted in DNNProv, DLProv has expanded its scope and capabilities to accommodate the broader domain of Deep Learning (DL).
 
 DNNProv began as a provenance service designed to support online hyperparameter analysis in DL, integrating retrospective provenance data (r-prov) with typical DNN software data, e.g. hyperparameters, DNN architecture attributes, etc.

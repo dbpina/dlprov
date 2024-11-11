@@ -23,7 +23,7 @@ The following list of software has to be configured/installed for running a DL m
 * [DfAnalyzer](https://github.com/dbpina/keras-prov/tree/main/DfAnalyzer)
 * [dfa-lib-python](https://github.com/dbpina/keras-prov/tree/main/dfa-lib-python/) 
 
-**This repository provides a Docker container, which can be found in step Running an Example in a Docker Environment.**
+**This repository provides a Docker container, which can be found in step [Running an Example in a Docker Environment](#running-an-example-in-a-docker-environment).**
 
 <!-- ## Installation -->
 

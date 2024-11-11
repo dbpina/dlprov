@@ -60,7 +60,7 @@ cd DfAnalyzer
 
 Due to Git LFS (Large File Storage) restrictions, this repository includes a file that cannot be tracked by Git. Please follow these steps to download and add the file manually:
 
-1. Download the file from [this Google Drive link](https://drive.google.com/drive/folders/1J2KGXIe8Vb1z0WLuV1cCKDFBsxbOs9R2?usp=share_link).
+1. Download the file from [this Google Drive link](https://drive.google.com/drive/folders/1lqm0LBc1pCICQXPDl1b0tIcUtN5xnORC?usp=share_link).
 
 
 2. After downloading the file, move it to the `dlprov/DfAnalyzer/target` folder in the repository.

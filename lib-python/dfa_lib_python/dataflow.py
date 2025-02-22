@@ -70,14 +70,18 @@ class Dataflow(ProvenanceObject):
 
             tf2 = Transformation("SplitData")
             tf2_input = Set("iSplitConfig", SetType.INPUT, 
-                [Attribute("RATIO", AttributeType.NUMERIC)])
+                [Attribute("TRAIN_RATIO", AttributeType.NUMERIC),
+                Attribute("VAL_RATIO", AttributeType.NUMERIC),
+                Attribute("TEST_RATIO", AttributeType.NUMERIC)])
             tf2_train_output = Set("oTrainSet", SetType.OUTPUT, 
                 [Attribute("TrainSet", AttributeType.TEXT)])
+            tf2_val_output = Set("oValSet", SetType.OUTPUT, 
+                [Attribute("ValSet", AttributeType.TEXT)])            
             tf2_test_output = Set("oTestSet", SetType.OUTPUT, 
                 [Attribute("TestSet", AttributeType.TEXT)])
             tf1_output.set_type(SetType.INPUT)
             tf1_output.dependency=tf1._tag
-            tf2.set_sets([tf2_input, tf1_output, tf2_train_output, tf2_test_output])
+            tf2.set_sets([tf2_input, tf1_output, tf2_train_output, tf2_val_output, tf2_test_output])
             self.add_transformation(tf2)
 
             tf3 = Transformation("TrainModel")
@@ -85,6 +89,7 @@ class Dataflow(ProvenanceObject):
                 [Attribute("OPTIMIZER_NAME", AttributeType.TEXT), 
                 Attribute("LEARNING_RATE", AttributeType.NUMERIC),
                 Attribute("NUM_EPOCHS", AttributeType.NUMERIC),
+                Attribute("BATCH_SIZE", AttributeType.NUMERIC),
                 Attribute("NUM_LAYERS", AttributeType.NUMERIC)])
             tf3_output = Set("oTrainModel", SetType.OUTPUT, 
                 [Attribute("TIMESTAMP", AttributeType.TEXT), 

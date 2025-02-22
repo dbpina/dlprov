@@ -12,6 +12,8 @@ A DL life cycle involves several data transformations, such as performing data p
 
 DLProv is developed on top of [DfAnalyzer](https://gitlab.com/ssvitor/dataflow_analyzer) provenance services. It uses the columnar DBMS MonetDB to support online provenance data analysis and to generate W3C PROV-compliant documents. In addition, these provenance documents can be analyzed through graph DBMS such as Neo4j.
 
+**This repository provides a Docker container for DLProv, which can be found in step [Running an Example in a Docker Environment](#running-an-example-in-a-docker-environment).**
+
 ## Software requirements
 
 The following list of software has to be configured/installed for running a DL model training that collects provenance with DLProv.
@@ -22,6 +24,7 @@ The following list of software has to be configured/installed for running a DL m
 * [prov](https://pypi.org/project/prov/), [pydot](https://pypi.org/project/pydot/), and [provdbconnector](https://github.com/DLR-SC/prov-db-connector/tree/master/provdbconnector)
 * [DfAnalyzer](https://github.com/dbpina/keras-prov/tree/main/DfAnalyzer)
 * [dfa-lib-python](https://github.com/dbpina/keras-prov/tree/main/dfa-lib-python/) 
+
 
 <!-- ## Installation -->
 
@@ -53,6 +56,19 @@ cd DfAnalyzer
 ./start-dfanalyzer.sh
 
 ``` -->
+
+## Downloading Large File Due to Git LFS Restrictions
+
+Due to Git LFS (Large File Storage) restrictions, this repository includes a file that cannot be tracked by Git. Please follow these steps to download and add the file manually:
+
+1. Download the file from [this Google Drive link](https://drive.google.com/drive/folders/1lqm0LBc1pCICQXPDl1b0tIcUtN5xnORC?usp=share_link).
+
+
+2. After downloading the file, move it to the `dlprov/DfAnalyzer/target` folder in the repository.
+
+3. Once the file is in the correct folder, you can continue with the setup or use the repository as intended.
+
+**Note**: If you are using the provided Docker container, this step is not required, as the necessary files will be automatically handled within the container.
 
 ## How to instrument a DL model
 

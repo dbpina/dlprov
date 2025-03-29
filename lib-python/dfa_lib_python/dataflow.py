@@ -68,6 +68,22 @@ class Dataflow(ProvenanceObject):
             tf1.set_sets([tf1_input, tf1_output])
             self.add_transformation(tf1)
 
+            tf1_1 = Transformation("RandomHorizontal")
+            tf1_1_output = Set("oRandomHorizontal", SetType.OUTPUT, 
+                [Attribute("DATASET_DIR", AttributeType.TEXT)])
+            tf1_output.set_type(SetType.INPUT)
+            tf1_output.dependency=tf1._tag
+            tf1_1.set_sets([tf1_output, tf1_1_output])
+            self.add_transformation(tf1_1)
+
+            tf1_2 = Transformation("Normalize")
+            tf1_2_output = Set("oNormalize", SetType.OUTPUT, 
+                [Attribute("DATASET_DIR", AttributeType.TEXT)])
+            tf1_1_output.set_type(SetType.INPUT)
+            tf1_1_output.dependency=tf1_1._tag
+            tf1_2.set_sets([tf1_1_output, tf1_2_output])
+            self.add_transformation(tf1_2)            
+
             tf2 = Transformation("SplitData")
             tf2_input = Set("iSplitConfig", SetType.INPUT, 
                 [Attribute("TRAIN_RATIO", AttributeType.NUMERIC),
@@ -79,19 +95,19 @@ class Dataflow(ProvenanceObject):
                 [Attribute("ValSet", AttributeType.TEXT)])            
             tf2_test_output = Set("oTestSet", SetType.OUTPUT, 
                 [Attribute("TestSet", AttributeType.TEXT)])
-            tf1_output.set_type(SetType.INPUT)
-            tf1_output.dependency=tf1._tag
-            tf2.set_sets([tf2_input, tf1_output, tf2_train_output, tf2_val_output, tf2_test_output])
+            tf1_2_output.set_type(SetType.INPUT)
+            tf1_2_output.dependency=tf1_2._tag
+            tf2.set_sets([tf1_2_output, tf2_input, tf2_train_output, tf2_val_output, tf2_test_output])            
             self.add_transformation(tf2)
 
-            tf3 = Transformation("TrainModel")
-            tf3_input = Set("iTrainModel", SetType.INPUT, 
+            tf3 = Transformation("Train")
+            tf3_input = Set("iTrain", SetType.INPUT, 
                 [Attribute("OPTIMIZER_NAME", AttributeType.TEXT), 
                 Attribute("LEARNING_RATE", AttributeType.NUMERIC),
                 Attribute("NUM_EPOCHS", AttributeType.NUMERIC),
                 Attribute("BATCH_SIZE", AttributeType.NUMERIC),
                 Attribute("NUM_LAYERS", AttributeType.NUMERIC)])
-            tf3_output = Set("oTrainModel", SetType.OUTPUT, 
+            tf3_output = Set("oTrain", SetType.OUTPUT, 
                 [Attribute("TIMESTAMP", AttributeType.TEXT), 
                 Attribute("ELAPSED_TIME", AttributeType.TEXT),
                 Attribute("LOSS", AttributeType.NUMERIC),
@@ -107,8 +123,8 @@ class Dataflow(ProvenanceObject):
             tf3.set_sets([tf2_train_output, tf3_input, tf3_output, tf3_output_model])
             self.add_transformation(tf3)
 
-            tf4 = Transformation("TestModel")
-            tf4_output = Set("oTestModel", SetType.OUTPUT, 
+            tf4 = Transformation("Test")
+            tf4_output = Set("oTest", SetType.OUTPUT, 
                 [Attribute("LOSS", AttributeType.NUMERIC),
                 Attribute("ACCURACY", AttributeType.NUMERIC)])
             tf2_test_output.set_type(SetType.INPUT)

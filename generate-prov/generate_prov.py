@@ -84,15 +84,17 @@ def main():
         os.makedirs(output_dir)
 
     full_filename = os.path.join(output_dir, f'{w3c_name}.png')
+    full_filename_pdf = os.path.join(output_dir, f'{w3c_name}.pdf')
     full_filename_provn = os.path.join(output_dir, f'{w3c_name}.provn')  
     full_filename_json = os.path.join(output_dir, f'{w3c_name}.json')  
 
     dot_file = prov_to_dot(prov_document)
-    dot_file.write_png(full_filename) 
+    #dot_file.write_png(full_filename) 
+    dot_file.write_pdf(full_filename_pdf) 
 
     prov_n_content = prov_document.serialize(format='provn')
     with open(full_filename_provn, 'w') as f:
-        f.write(prov_n_content)   
+       f.write(prov_n_content)   
 
     # Test the connection to Neo4j before proceeding
     if not test_connection():
@@ -247,6 +249,23 @@ def generate_w3c_for_specific_execution(df_exec, cursor, prov_document):
     prov_df_exec_activity = prov_document.activity(df_exec_activity_id, other_attributes=df_exec_attributes)
 
     prov_document.used(prov_df_exec_activity, prov_dataflow_entity)
+
+    user_attributes = {}
+    comp_env_attributes = {}
+
+    user_name = os.getlogin()
+    user_attributes["dlprov:name"] = user_name
+    entity_user_id = 'dlprov:' + str(uuid.uuid4())
+    user_entity = prov_document.agent(entity_user_id, other_attributes=user_attributes)    
+
+    computational_env = "Ubuntu 22"
+    comp_env_attributes["dlprov:description"] = computational_env
+    comp_env_user_id = 'dlprov:' + str(uuid.uuid4())
+    comp_env_entity = prov_document.agent(comp_env_user_id, other_attributes=comp_env_attributes)  
+
+    prov_document.association(df_exec_activity_id, user_entity)
+
+    prov_document.association(df_exec_activity_id, comp_env_entity)      
 
     generate_each_execution(df_tag, df_exec, prov_df_exec_activity, cursor, prov_document)        
 

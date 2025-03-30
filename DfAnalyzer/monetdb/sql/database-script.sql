@@ -16,23 +16,26 @@ CREATE SEQUENCE "task_id_seq" as integer START WITH 1;
 CREATE SEQUENCE "exec_id_seq" as integer START WITH 1;
 CREATE SEQUENCE "file_id_seq" as integer START WITH 1;
 CREATE SEQUENCE "performance_id_seq" as integer START WITH 1;
+CREATE SEQUENCE "user_id_seq" as integer START WITH 1;
+CREATE SEQUENCE "computational_id_seq" as integer START WITH 1;
+
 
 -- tables
 CREATE TABLE dataflow(
-	id INTEGER DEFAULT NEXT VALUE FOR "df_id_seq" NOT NULL,
+	id INTEGER DEFAULT NEXT VALUE FOR "public"."df_id_seq" NOT NULL,
 	tag VARCHAR(50) NOT NULL,
 	PRIMARY KEY ("id")
 );
 
 CREATE TABLE dataflow_version(
-	version INTEGER DEFAULT NEXT VALUE FOR "version_id_seq" NOT NULL,
+	version INTEGER DEFAULT NEXT VALUE FOR "public"."version_id_seq" NOT NULL,
 	df_id INTEGER NOT NULL,
 	PRIMARY KEY ("version"),
 	FOREIGN KEY ("df_id") REFERENCES dataflow("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE data_transformation(
-	id INTEGER DEFAULT NEXT VALUE FOR "dt_id_seq" NOT NULL,
+	id INTEGER DEFAULT NEXT VALUE FOR "public"."dt_id_seq" NOT NULL,
 	df_id INTEGER NOT NULL,
 	tag VARCHAR(50) NOT NULL,
 	PRIMARY KEY ("id"),
@@ -40,7 +43,7 @@ CREATE TABLE data_transformation(
 );
 
 CREATE TABLE program(
-	id INTEGER DEFAULT NEXT VALUE FOR "program_id_seq" NOT NULL,
+	id INTEGER DEFAULT NEXT VALUE FOR "public"."program_id_seq" NOT NULL,
 	df_id INTEGER NOT NULL,
 	name VARCHAR(200) NOT NULL,
 	path VARCHAR(500) NOT NULL,
@@ -57,7 +60,7 @@ CREATE TABLE use_program(
 );
 
 CREATE TABLE data_set(
-	id INTEGER DEFAULT NEXT VALUE FOR "ds_id_seq" NOT NULL,
+	id INTEGER DEFAULT NEXT VALUE FOR "public"."ds_id_seq" NOT NULL,
 	df_id INTEGER NOT NULL,
 	tag VARCHAR(50) NOT NULL,
 	PRIMARY KEY ("id"),
@@ -65,7 +68,7 @@ CREATE TABLE data_set(
 );
 
 CREATE TABLE data_dependency(
-	id INTEGER DEFAULT NEXT VALUE FOR "dd_id_seq" NOT NULL,
+	id INTEGER DEFAULT NEXT VALUE FOR "public"."dd_id_seq" NOT NULL,
 	previous_dt_id INTEGER,
 	next_dt_id INTEGER,
 	ds_id INTEGER NOT NULL,
@@ -76,7 +79,7 @@ CREATE TABLE data_dependency(
 );
 
 CREATE TABLE extractor(
-	id INTEGER DEFAULT NEXT VALUE FOR "extractor_id_seq" NOT NULL,
+	id INTEGER DEFAULT NEXT VALUE FOR "public"."extractor_id_seq" NOT NULL,
 	ds_id INTEGER NOT NULL,
 	tag VARCHAR(20) NOT NULL,
 	cartridge VARCHAR(20) NOT NULL,
@@ -86,7 +89,7 @@ CREATE TABLE extractor(
 );
 
 CREATE TABLE extractor_combination(
-	id INTEGER DEFAULT NEXT VALUE FOR "ecombination_id_seq" NOT NULL,
+	id INTEGER DEFAULT NEXT VALUE FOR "public"."ecombination_id_seq" NOT NULL,
 	ds_id INTEGER NOT NULL,
 	outer_ext_id INTEGER NOT NULL,
 	inner_ext_id INTEGER NOT NULL,
@@ -99,7 +102,7 @@ CREATE TABLE extractor_combination(
 );
 
 CREATE TABLE attribute(
-	id INTEGER DEFAULT NEXT VALUE FOR "att_id_seq" NOT NULL,
+	id INTEGER DEFAULT NEXT VALUE FOR "public"."att_id_seq" NOT NULL,
 	ds_id INTEGER NOT NULL,
 	extractor_id INTEGER,
 	name VARCHAR(30),
@@ -110,15 +113,32 @@ CREATE TABLE attribute(
 );
 
 CREATE TABLE dataflow_execution(
-	id INTEGER DEFAULT NEXT VALUE FOR "exec_id_seq" NOT NULL,
+	id INTEGER DEFAULT NEXT VALUE FOR "public"."exec_id_seq" NOT NULL,
 	tag VARCHAR(50) NOT NULL,
 	df_id INTEGER NOT NULL,
 	PRIMARY KEY ("tag"),
 	FOREIGN KEY ("df_id") REFERENCES dataflow("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+CREATE TABLE data_scientist(
+	id INTEGER DEFAULT NEXT VALUE FOR "public"."user_id_seq" NOT NULL,
+	name VARCHAR(50) NOT NULL,
+	email VARCHAR(50),
+	df_exec VARCHAR(50) NOT NULL,
+	PRIMARY KEY ("id"),
+	FOREIGN KEY ("df_exec") REFERENCES dataflow_execution("tag") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE computational_environment(
+	id INTEGER DEFAULT NEXT VALUE FOR "public"."computational_id_seq" NOT NULL,
+	information VARCHAR(50) NOT NULL,
+	df_exec VARCHAR(50) NOT NULL,
+	PRIMARY KEY ("id"),
+	FOREIGN KEY ("df_exec") REFERENCES dataflow_execution("tag") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
 CREATE TABLE task(
-	id INTEGER DEFAULT NEXT VALUE FOR "task_id_seq" NOT NULL,
+	id INTEGER DEFAULT NEXT VALUE FOR "public"."task_id_seq" NOT NULL,
 	identifier INTEGER NOT NULL,
 	df_version INTEGER NOT NULL,
 	df_exec VARCHAR(50) NOT NULL,
@@ -135,7 +155,7 @@ CREATE TABLE task(
 );
 
 CREATE TABLE file(
-	id INTEGER DEFAULT NEXT VALUE FOR "file_id_seq" NOT NULL,
+	id INTEGER DEFAULT NEXT VALUE FOR "public"."file_id_seq" NOT NULL,
 	task_id INTEGER NOT NULL,
 	name VARCHAR(200) NOT NULL,
 	path VARCHAR(500) NOT NULL,
@@ -144,7 +164,7 @@ CREATE TABLE file(
 );
 
 CREATE TABLE performance(
-	id INTEGER DEFAULT NEXT VALUE FOR "performance_id_seq" NOT NULL,
+	id INTEGER DEFAULT NEXT VALUE FOR "public"."performance_id_seq" NOT NULL,
 	task_id INTEGER NOT NULL,	
 	subtask_id INTEGER,	
 	method VARCHAR(30) NOT NULL,
@@ -201,7 +221,7 @@ BEGIN
     SELECT id INTO vprogram_id FROM program p WHERE df_id = vdf_id AND name = vname AND path = vpath;
 
     IF(vprogram_id IS NULL) THEN
-    	SELECT NEXT VALUE FOR "program_id_seq" into vprogram_id;
+    	SELECT NEXT VALUE FOR "public"."program_id_seq" into vprogram_id;
     	INSERT INTO program(id,df_id,name,path) VALUES (vprogram_id,vdf_id,vname,vpath);
 	END IF;
 	INSERT INTO use_program(dt_id,program_id) VALUES (vdt_id,vprogram_id);
@@ -242,7 +262,7 @@ BEGIN
 		DECLARE vdd_id INTEGER;
 		#SELECT NEXT VALUE FOR "dd_id_seq" into vdd_id;
 
-		IF(vtype LIKE 'INPUT') THEN
+		IF(vtype = 'INPUT') THEN
 			INSERT INTO data_dependency(previous_dt_id,next_dt_id,ds_id) VALUES (null,vdt_id,vds_id);
 		ELSE
 			INSERT INTO data_dependency(previous_dt_id,next_dt_id,ds_id) VALUES (vdt_id,null,vds_id);
@@ -314,7 +334,7 @@ BEGIN
 	DECLARE vid INTEGER;
     SELECT id INTO vid FROM file WHERE name=vname AND path=vpath;
     IF(vid IS NULL) THEN
-    	SELECT NEXT VALUE FOR "file_id_seq" into vid;
+    	SELECT NEXT VALUE FOR "public"."file_id_seq" into vid;
     	INSERT INTO file(id,task_id,name,path) VALUES (vid,vtask_id,vname,vpath);
 	END IF;
 	RETURN vid;
@@ -355,7 +375,7 @@ BEGIN
 	DECLARE vid INTEGER;
     SELECT id INTO vid FROM extractor WHERE tag = vtag AND ds_id = vds_id AND cartridge = vcartridge AND extension = vextension;
     IF(vid IS NULL) THEN
-    	SELECT NEXT VALUE FOR "extractor_id_seq" into vid;
+    	SELECT NEXT VALUE FOR "public"."extractor_id_seq" into vid;
     	INSERT INTO extractor(id,ds_id,tag,cartridge,extension) VALUES (vid,vds_id,vtag,vcartridge,vextension);
 	END IF;
 	RETURN vid;
@@ -368,7 +388,7 @@ BEGIN
 	DECLARE vid INTEGER;
     SELECT id INTO vid FROM extractor_combination WHERE outer_ext_id = vouter_ext_id AND inner_ext_id = vinner_ext_id AND ds_id = vds_id;
     IF(vid IS NULL) THEN
-    	SELECT NEXT VALUE FOR "ecombination_id_seq" into vid;
+    	SELECT NEXT VALUE FOR "public"."ecombination_id_seq" into vid;
     	INSERT INTO extractor_combination(outer_ext_id,inner_ext_id,keys,key_types,ds_id) VALUES (vouter_ext_id,vinner_ext_id,vkeys,vkey_types,vds_id);
 	END IF;
 	RETURN vid;

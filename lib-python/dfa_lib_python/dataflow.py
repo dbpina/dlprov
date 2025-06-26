@@ -1,5 +1,6 @@
 import requests
 import os
+import json
 from .ProvenanceObject import ProvenanceObject
 from .transformation import Transformation
 
@@ -64,25 +65,25 @@ class Dataflow(ProvenanceObject):
                 [Attribute("DATASET_NAME", AttributeType.TEXT), 
                 Attribute("DATASET_SOURCE", AttributeType.TEXT)])
             tf1_output = Set("oLoadData", SetType.OUTPUT, 
-                [Attribute("DATASET_DIR", AttributeType.TEXT)])
+                [Attribute("DATASET_DIR", AttributeType.FILE)])
             tf1.set_sets([tf1_input, tf1_output])
             self.add_transformation(tf1)
 
-            tf1_1 = Transformation("RandomHorizontal")
-            tf1_1_output = Set("oRandomHorizontal", SetType.OUTPUT, 
-                [Attribute("DATASET_DIR", AttributeType.TEXT)])
-            tf1_output.set_type(SetType.INPUT)
-            tf1_output.dependency=tf1._tag
-            tf1_1.set_sets([tf1_output, tf1_1_output])
-            self.add_transformation(tf1_1)
+            # tf1_1 = Transformation("RandomHorizontal")
+            # tf1_1_output = Set("oRandomHorizontal", SetType.OUTPUT, 
+            #     [Attribute("DATASET_DIR", AttributeType.FILE)])
+            # tf1_output.set_type(SetType.INPUT)
+            # tf1_output.dependency=tf1._tag
+            # tf1_1.set_sets([tf1_output, tf1_1_output])
+            # self.add_transformation(tf1_1)
 
-            tf1_2 = Transformation("Normalize")
-            tf1_2_output = Set("oNormalize", SetType.OUTPUT, 
-                [Attribute("DATASET_DIR", AttributeType.TEXT)])
-            tf1_1_output.set_type(SetType.INPUT)
-            tf1_1_output.dependency=tf1_1._tag
-            tf1_2.set_sets([tf1_1_output, tf1_2_output])
-            self.add_transformation(tf1_2)            
+            # tf1_2 = Transformation("Normalize")
+            # tf1_2_output = Set("oNormalize", SetType.OUTPUT, 
+            #     [Attribute("DATASET_DIR", AttributeType.FILE)])
+            # tf1_1_output.set_type(SetType.INPUT)
+            # tf1_1_output.dependency=tf1_1._tag
+            # tf1_2.set_sets([tf1_1_output, tf1_2_output])
+            # self.add_transformation(tf1_2)            
 
             tf2 = Transformation("SplitData")
             tf2_input = Set("iSplitConfig", SetType.INPUT, 
@@ -90,14 +91,14 @@ class Dataflow(ProvenanceObject):
                 Attribute("VAL_RATIO", AttributeType.NUMERIC),
                 Attribute("TEST_RATIO", AttributeType.NUMERIC)])
             tf2_train_output = Set("oTrainSet", SetType.OUTPUT, 
-                [Attribute("TrainSet", AttributeType.TEXT)])
+                [Attribute("TrainSet", AttributeType.FILE)])
             tf2_val_output = Set("oValSet", SetType.OUTPUT, 
-                [Attribute("ValSet", AttributeType.TEXT)])            
+                [Attribute("ValSet", AttributeType.FILE)])            
             tf2_test_output = Set("oTestSet", SetType.OUTPUT, 
-                [Attribute("TestSet", AttributeType.TEXT)])
-            tf1_2_output.set_type(SetType.INPUT)
-            tf1_2_output.dependency=tf1_2._tag
-            tf2.set_sets([tf1_2_output, tf2_input, tf2_train_output, tf2_val_output, tf2_test_output])            
+                [Attribute("TestSet", AttributeType.FILE)])
+            tf1_output.set_type(SetType.INPUT)
+            tf1_output.dependency=tf1._tag
+            tf2.set_sets([tf1_output, tf2_input, tf2_train_output, tf2_val_output, tf2_test_output])            
             self.add_transformation(tf2)
 
             tf3 = Transformation("Train")
@@ -117,10 +118,12 @@ class Dataflow(ProvenanceObject):
                 Attribute("EPOCH", AttributeType.NUMERIC)])
             tf3_output_model = Set("oTrainedModel", SetType.OUTPUT, 
                 [Attribute("MODEL_NAME", AttributeType.TEXT),
-                Attribute("MODEL_DIR", AttributeType.TEXT)])
+                Attribute("MODEL_DIR", AttributeType.FILE)])
+            tf3_output_weights = Set("oWeights", SetType.OUTPUT, 
+                [Attribute("WEIGHTS_PATH", AttributeType.FILE)])            
             tf2_train_output.set_type(SetType.INPUT)
             tf2_train_output.dependency=tf2._tag
-            tf3.set_sets([tf2_train_output, tf3_input, tf3_output, tf3_output_model])
+            tf3.set_sets([tf2_train_output, tf3_input, tf3_output, tf3_output_model, tf3_output_weights])
             self.add_transformation(tf3)
 
             tf4 = Transformation("Test")
@@ -141,3 +144,20 @@ class Dataflow(ProvenanceObject):
         url = dfa_url + '/pde/dataflow/json'
         r = requests.post(url, json=self.get_specification())  
         print(r.status_code)
+
+        self.file_attributes = {}  
+
+        for tf in self.transformations:
+            for s in tf.get("sets", []):
+                tag = s["tag"]
+                file_attrs = [
+                    (idx, attr["name"]) for idx, attr in enumerate(s["attributes"])
+                    if attr["type"] == "FILE"
+                ]
+                if file_attrs:
+                    self.file_attributes[tag] = file_attrs            
+
+        with open("file_attrs.json", "w") as f:
+            json.dump(self.file_attributes, f)
+
+

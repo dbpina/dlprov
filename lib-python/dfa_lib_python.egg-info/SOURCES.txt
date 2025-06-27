@@ -8,8 +8,10 @@ dfa_lib_python/ProvenanceObject.py
 dfa_lib_python/__init__.py
 dfa_lib_python/attribute.py
 dfa_lib_python/attribute_type.py
+dfa_lib_python/build_w3c.py
 dfa_lib_python/dataflow.py
 dfa_lib_python/dataset.py
+dfa_lib_python/dataverse_uploader.py
 dfa_lib_python/dependency.py
 dfa_lib_python/element.py
 dfa_lib_python/extractor.py

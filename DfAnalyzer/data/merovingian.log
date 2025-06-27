@@ -12883,3 +12883,80 @@
 2024-03-11 22:26:59 MSG merovingian[87984]: caught SIGTERM, starting shutdown sequence
 2024-03-11 22:27:00 MSG control[87984]: control channel closed
 2024-03-11 22:27:00 ERR merovingian[87984]: strange, trying to kill process 0 to stop database 'dataflow_analyzer' which seems to be served by process 87986 instead
+2025-06-27 12:58:56 MSG merovingian[5188]: Merovingian 11.53.3 (Mar2025) starting
+2025-06-27 12:58:56 MSG merovingian[5188]: monitoring dbfarm /Users/debora/Documents/Doutorado/dlprov/DfAnalyzer/data
+2025-06-27 12:58:56 MSG merovingian[5188]: accepting connections on TCP socket localhost:50000
+2025-06-27 12:58:56 MSG merovingian[5188]: accepting connections on TCP socket localhost:50000
+2025-06-27 12:58:56 MSG merovingian[5188]: accepting connections on UNIX domain socket /tmp/.s.monetdb.50000
+2025-06-27 12:58:56 MSG discovery[5188]: listening for UDP messages on localhost:50000
+2025-06-27 12:58:56 MSG control[5188]: accepting connections on UNIX domain socket /tmp/.s.merovingian.50000
+2025-06-27 12:58:56 MSG control[5188]: (local): served status list
+2025-06-27 12:58:57 MSG control[5188]: (local): destroyed database 'dataflow_analyzer'
+2025-06-27 12:58:57 MSG control[5188]: (local): created database 'dataflow_analyzer'
+2025-06-27 12:58:57 MSG control[5188]: (local): served status list
+2025-06-27 12:58:57 MSG control[5188]: (local): released database 'dataflow_analyzer'
+2025-06-27 12:58:57 MSG control[5188]: (local): served status list
+2025-06-27 12:58:57 MSG merovingian[5188]: starting database 'dataflow_analyzer', up min/avg/max: 0s/0s/0s, crash average: 0.00 0.00 0.00 (0-0=0)
+2025-06-27 12:58:57 MSG dataflow_analyzer[5194]: arguments: /opt/homebrew/Cellar/monetdb/11.53.3/bin/mserver5-11.53.3 --dbpath=/Users/debora/Documents/Doutorado/dlprov/DfAnalyzer/data/dataflow_analyzer --set=merovingian_uri=mapi:monetdb://Mac.local:50000/dataflow_analyzer --set=mapi_listenaddr=none --set=mapi_usock=/Users/debora/Documents/Doutorado/dlprov/DfAnalyzer/data/dataflow_analyzer/.mapi.sock --set=monet_vault_key=/Users/debora/Documents/Doutorado/dlprov/DfAnalyzer/data/dataflow_analyzer/.vaultkey --set=gdk_nr_threads=12 --set=tablet_threads=12 --set=max_clients=64 --set=sql_optimizer=default_pipe
+2025-06-27 12:58:57 MSG dataflow_analyzer[5194]: # MonetDB 5 server v11.53.3 (Mar2025)
+2025-06-27 12:58:57 MSG dataflow_analyzer[5194]: # Serving database 'dataflow_analyzer', using 12 threads
+2025-06-27 12:58:57 MSG dataflow_analyzer[5194]: # Compiled for arm64-pc-darwin-appleclang/64bit with 128bit integers
+2025-06-27 12:58:57 MSG dataflow_analyzer[5194]: # Found 16.000 GiB available main-memory of which we use 13.040 GiB
+2025-06-27 12:58:57 MSG dataflow_analyzer[5194]: # Copyright (c) 2024, 2025 MonetDB Foundation, all rights reserved
+2025-06-27 12:58:57 MSG dataflow_analyzer[5194]: # Visit https://www.monetdb.org/ for further information
+2025-06-27 12:58:57 MSG dataflow_analyzer[5194]: # MonetDB/SQL module loaded
+2025-06-27 12:58:57 MSG dataflow_analyzer[5194]: # Listening for UNIX domain connection requests on mapi:monetdb:///Users/debora/Documents/Doutorado/dlprov/DfAnalyzer/data/dataflow_analyzer/.mapi.sock
+2025-06-27 13:01:40 MSG merovingian[5188]: caught SIGTERM, starting shutdown sequence
+2025-06-27 13:01:40 MSG control[5188]: control channel closed
+2025-06-27 13:01:41 MSG merovingian[5188]: sending process 5194 (database 'dataflow_analyzer') the TERM signal
+2025-06-27 13:01:41 MSG merovingian[5188]: database 'dataflow_analyzer' has shut down
+2025-06-27 13:01:41 MSG merovingian[5286]: Merovingian 11.53.3 (Mar2025) starting
+2025-06-27 13:01:41 MSG merovingian[5286]: monitoring dbfarm /Users/debora/Documents/Doutorado/dlprov/DfAnalyzer/data
+2025-06-27 13:01:41 MSG merovingian[5286]: accepting connections on TCP socket localhost:50000
+2025-06-27 13:01:41 MSG merovingian[5286]: accepting connections on TCP socket localhost:50000
+2025-06-27 13:01:41 MSG merovingian[5286]: accepting connections on UNIX domain socket /tmp/.s.monetdb.50000
+2025-06-27 13:01:41 MSG discovery[5286]: listening for UDP messages on localhost:50000
+2025-06-27 13:01:41 MSG control[5286]: accepting connections on UNIX domain socket /tmp/.s.merovingian.50000
+2025-06-27 13:01:41 MSG control[5286]: (local): served status list
+2025-06-27 13:01:41 MSG control[5286]: (local): destroyed database 'dataflow_analyzer'
+2025-06-27 13:01:41 MSG control[5286]: (local): created database 'dataflow_analyzer'
+2025-06-27 13:01:41 MSG control[5286]: (local): served status list
+2025-06-27 13:01:41 MSG control[5286]: (local): released database 'dataflow_analyzer'
+2025-06-27 13:01:41 MSG control[5286]: (local): served status list
+2025-06-27 13:01:41 MSG merovingian[5286]: starting database 'dataflow_analyzer', up min/avg/max: 0s/0s/0s, crash average: 0.00 0.00 0.00 (0-0=0)
+2025-06-27 13:01:42 MSG dataflow_analyzer[5292]: arguments: /opt/homebrew/Cellar/monetdb/11.53.3/bin/mserver5-11.53.3 --dbpath=/Users/debora/Documents/Doutorado/dlprov/DfAnalyzer/data/dataflow_analyzer --set=merovingian_uri=mapi:monetdb://Mac.local:50000/dataflow_analyzer --set=mapi_listenaddr=none --set=mapi_usock=/Users/debora/Documents/Doutorado/dlprov/DfAnalyzer/data/dataflow_analyzer/.mapi.sock --set=monet_vault_key=/Users/debora/Documents/Doutorado/dlprov/DfAnalyzer/data/dataflow_analyzer/.vaultkey --set=gdk_nr_threads=12 --set=tablet_threads=12 --set=max_clients=64 --set=sql_optimizer=default_pipe
+2025-06-27 13:01:42 MSG dataflow_analyzer[5292]: # MonetDB 5 server v11.53.3 (Mar2025)
+2025-06-27 13:01:42 MSG dataflow_analyzer[5292]: # Serving database 'dataflow_analyzer', using 12 threads
+2025-06-27 13:01:42 MSG dataflow_analyzer[5292]: # Compiled for arm64-pc-darwin-appleclang/64bit with 128bit integers
+2025-06-27 13:01:42 MSG dataflow_analyzer[5292]: # Found 16.000 GiB available main-memory of which we use 13.040 GiB
+2025-06-27 13:01:42 MSG dataflow_analyzer[5292]: # Copyright (c) 2024, 2025 MonetDB Foundation, all rights reserved
+2025-06-27 13:01:42 MSG dataflow_analyzer[5292]: # Visit https://www.monetdb.org/ for further information
+2025-06-27 13:01:42 MSG dataflow_analyzer[5292]: # MonetDB/SQL module loaded
+2025-06-27 13:01:42 MSG dataflow_analyzer[5292]: # Listening for UNIX domain connection requests on mapi:monetdb:///Users/debora/Documents/Doutorado/dlprov/DfAnalyzer/data/dataflow_analyzer/.mapi.sock
+2025-06-27 13:05:43 MSG merovingian[5286]: caught SIGTERM, starting shutdown sequence
+2025-06-27 13:05:43 MSG control[5286]: control channel closed
+2025-06-27 13:05:43 MSG merovingian[5286]: sending process 5292 (database 'dataflow_analyzer') the TERM signal
+2025-06-27 13:05:44 MSG merovingian[5286]: database 'dataflow_analyzer' has shut down
+2025-06-27 13:05:44 MSG merovingian[5390]: Merovingian 11.53.3 (Mar2025) starting
+2025-06-27 13:05:44 MSG merovingian[5390]: monitoring dbfarm /Users/debora/Documents/Doutorado/dlprov/DfAnalyzer/data
+2025-06-27 13:05:44 MSG merovingian[5390]: accepting connections on TCP socket localhost:50000
+2025-06-27 13:05:44 MSG merovingian[5390]: accepting connections on TCP socket localhost:50000
+2025-06-27 13:05:44 MSG merovingian[5390]: accepting connections on UNIX domain socket /tmp/.s.monetdb.50000
+2025-06-27 13:05:44 MSG discovery[5390]: listening for UDP messages on localhost:50000
+2025-06-27 13:05:44 MSG control[5390]: accepting connections on UNIX domain socket /tmp/.s.merovingian.50000
+2025-06-27 13:05:44 MSG control[5390]: (local): served status list
+2025-06-27 13:05:44 MSG control[5390]: (local): destroyed database 'dataflow_analyzer'
+2025-06-27 13:05:44 MSG control[5390]: (local): created database 'dataflow_analyzer'
+2025-06-27 13:05:44 MSG control[5390]: (local): served status list
+2025-06-27 13:05:44 MSG control[5390]: (local): released database 'dataflow_analyzer'
+2025-06-27 13:05:44 MSG control[5390]: (local): served status list
+2025-06-27 13:05:44 MSG merovingian[5390]: starting database 'dataflow_analyzer', up min/avg/max: 0s/0s/0s, crash average: 0.00 0.00 0.00 (0-0=0)
+2025-06-27 13:05:45 MSG dataflow_analyzer[5396]: arguments: /opt/homebrew/Cellar/monetdb/11.53.3/bin/mserver5-11.53.3 --dbpath=/Users/debora/Documents/Doutorado/dlprov/DfAnalyzer/data/dataflow_analyzer --set=merovingian_uri=mapi:monetdb://Mac.local:50000/dataflow_analyzer --set=mapi_listenaddr=none --set=mapi_usock=/Users/debora/Documents/Doutorado/dlprov/DfAnalyzer/data/dataflow_analyzer/.mapi.sock --set=monet_vault_key=/Users/debora/Documents/Doutorado/dlprov/DfAnalyzer/data/dataflow_analyzer/.vaultkey --set=gdk_nr_threads=12 --set=tablet_threads=12 --set=max_clients=64 --set=sql_optimizer=default_pipe
+2025-06-27 13:05:45 MSG dataflow_analyzer[5396]: # MonetDB 5 server v11.53.3 (Mar2025)
+2025-06-27 13:05:45 MSG dataflow_analyzer[5396]: # Serving database 'dataflow_analyzer', using 12 threads
+2025-06-27 13:05:45 MSG dataflow_analyzer[5396]: # Compiled for arm64-pc-darwin-appleclang/64bit with 128bit integers
+2025-06-27 13:05:45 MSG dataflow_analyzer[5396]: # Found 16.000 GiB available main-memory of which we use 13.040 GiB
+2025-06-27 13:05:45 MSG dataflow_analyzer[5396]: # Copyright (c) 2024, 2025 MonetDB Foundation, all rights reserved
+2025-06-27 13:05:45 MSG dataflow_analyzer[5396]: # Visit https://www.monetdb.org/ for further information
+2025-06-27 13:05:45 MSG dataflow_analyzer[5396]: # MonetDB/SQL module loaded
+2025-06-27 13:05:45 MSG dataflow_analyzer[5396]: # Listening for UNIX domain connection requests on mapi:monetdb:///Users/debora/Documents/Doutorado/dlprov/DfAnalyzer/data/dataflow_analyzer/.mapi.sock

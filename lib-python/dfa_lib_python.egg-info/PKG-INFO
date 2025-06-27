@@ -1,5 +1,5 @@
-Metadata-Version: 2.1
-Name: dfa-lib-python
+Metadata-Version: 2.4
+Name: dfa_lib_python
 Version: 1.0.0
 Summary: A Python library for Dataflow Analyzer that can be installed with pip.
 Home-page: https://gitlab.com/viniciusscampos/dfa-lib-python
@@ -11,6 +11,22 @@ Classifier: Development Status :: 3 - Alpha
 Classifier: Intended Audience :: Developers
 Classifier: Programming Language :: Python :: 3
 License-File: LICENSE.md
+Requires-Dist: pypi-publisher
+Requires-Dist: pytest
+Requires-Dist: pytest-cov
+Requires-Dist: requests
+Requires-Dist: flake8
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: download-url
+Dynamic: home-page
+Dynamic: keywords
+Dynamic: license
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: summary
 
 Dataflow Analyzer Python Library
 ===============================

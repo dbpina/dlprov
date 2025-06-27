@@ -14,24 +14,33 @@ with open(CONFIG_PATH, "r") as f:
 BASE_URL = config["BASE_URL"]
 API_TOKEN = config["API_TOKEN"]
 NOME_DATAVERSE = config["NOME_DATAVERSE"]
+SUB_DATAVERSE = config["SUB_DATAVERSE"]
 
 API = NativeApi(BASE_URL, API_TOKEN)
 
+response = API.get_dataverse(SUB_DATAVERSE)
+
+if response.status_code == 200:
+    print(f"Successfully accessed the Dataverse: {SUB_DATAVERSE}")
+else:
+    print(f"Failed to access Dataverse: {SUB_DATAVERSE}")
+    print(response.json())
+
 def define_dataset(ds_filename):
-	# Criação do Dataset dentro do Dataverse
-	print("criando dataset")
-	dataset = Dataset()
-	dataset.from_json(read_file(ds_filename))
-	dataset.validate_json() # Sempre valida, para ver se está com todos os campos. Qualquer campo faltante, ele NÃO CRIA NADA
+    # Criação do Dataset dentro do Dataverse
+    print("criando dataset")
+    dataset = Dataset()
+    dataset.from_json(read_file(ds_filename))
+    dataset.validate_json() # Sempre valida, para ver se está com todos os campos. Qualquer campo faltante, ele NÃO CRIA NADA
 
-	# Enviar o Dataset
-	response = API.create_dataset(NOME_DATAVERSE, dataset.json())
-	print(response.json())
-	print(f"Dataset criado: {response.status_code}")
+    # Enviar o Dataset
+    response = API.create_dataset(SUB_DATAVERSE, dataset.json())
+    print(response.json())
+    print(f"Dataset criado: {response.status_code}")
 
-	# Obter o ID do Dataset criado (DOI)
-	dataset_pid = response.json()['data']['persistentId']
-	return dataset_pid
+    # Obter o ID do Dataset criado (DOI)
+    dataset_pid = response.json()['data']['persistentId']
+    return dataset_pid
 
 
 def upload_file(dataset_pid, file_path, directory_label):

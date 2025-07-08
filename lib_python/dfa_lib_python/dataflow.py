@@ -123,7 +123,9 @@ class Dataflow(ProvenanceObject):
                 [Attribute("WEIGHTS_PATH", AttributeType.FILE)])            
             tf2_train_output.set_type(SetType.INPUT)
             tf2_train_output.dependency=tf2._tag
-            tf3.set_sets([tf2_train_output, tf3_input, tf3_output, tf3_output_model, tf3_output_weights])
+            tf2_val_output.set_type(SetType.INPUT)
+            tf2_val_output.dependency=tf2._tag            
+            tf3.set_sets([tf2_train_output, tf2_val_output, tf3_input, tf3_output, tf3_output_model])
             self.add_transformation(tf3)
 
             tf4 = Transformation("Test")

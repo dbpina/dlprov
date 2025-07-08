@@ -247,7 +247,7 @@ BEGIN
 		WHERE previous_dt_id = vdep_dt_id AND next_dt_id = vdt_id AND ds_id = vds_id;
 
 		DECLARE vid INTEGER;
-		SELECT id INTO vid FROM data_dependency WHERE previous_dt_id = vdep_dt_id AND next_dt_id IS NULL AND ds_id = vds_id;
+		SELECT id INTO vid FROM data_dependency WHERE previous_dt_id = vdep_dt_id AND ds_id = vds_id;
 
 		IF(vid IS NULL) THEN
 			IF(vdd_id IS NULL) THEN

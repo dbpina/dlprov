@@ -6,7 +6,7 @@ from pyDataverse.utils import read_file
 
 CONFIG_PATH = os.environ.get(
     "DATAVERSE_CONFIG",
-    "/Users/debora/Documents/Doutorado/dlprov/lib-python/dfa_lib_python/dataverse_config.json"
+    "dataverse_config.json"
 )
 with open(CONFIG_PATH, "r") as f:
     config = json.load(f)
@@ -28,14 +28,14 @@ else:
 
 def define_dataset(ds_filename):
     # Criação do Dataset dentro do Dataverse
-    print("criando dataset")
+    #print("criando dataset")
     dataset = Dataset()
     dataset.from_json(read_file(ds_filename))
     dataset.validate_json() # Sempre valida, para ver se está com todos os campos. Qualquer campo faltante, ele NÃO CRIA NADA
 
     # Enviar o Dataset
     response = API.create_dataset(SUB_DATAVERSE, dataset.json())
-    print(response.json())
+    #print(response.json())
     print(f"Dataset criado: {response.status_code}")
 
     # Obter o ID do Dataset criado (DOI)
@@ -45,10 +45,6 @@ def define_dataset(ds_filename):
 
 def upload_file(dataset_pid, file_path, directory_label):
     """Uploads a file to Dataverse and returns the file metadata."""
-    print("uploading file")
-    print(dataset_pid)
-    print(file_path)
-    print(directory_label)
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"File does not exist: {file_path}")
 

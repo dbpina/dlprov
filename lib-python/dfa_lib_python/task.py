@@ -26,11 +26,13 @@ class Task(ProvenanceObject):
         - output (:obj:`str`, optional): Task output.
         - error (:obj:`str`, optional): Task error.
     """
-    def __init__(self, id, dataflow_tag, exec_tag, transformation_tag,
+    def __init__(self, id, dataflow, exec_tag, transformation_tag,
                  sub_id="", dependency=None, workspace="", resource="",
                  output="", error=""):
         ProvenanceObject.__init__(self, transformation_tag)
         self._first = str(0)     
+        self._dataflow_tag = dataflow._tag
+        self._email = dataflow.email
         self._exec = exec_tag
         self._workspace = workspace
         self._resource = resource
@@ -39,7 +41,8 @@ class Task(ProvenanceObject):
         self._error = error
         self._sets = []
         self._status = TaskStatus.READY.value
-        self._dataflow = dataflow_tag.lower()
+        self._dataflow = dataflow._tag.lower()
+        # self._dataflow = dataflow_tag.lower()
         self._transformation = transformation_tag.lower()
         self._id = str(id)
         self._sub_id = sub_id
@@ -125,5 +128,6 @@ class Task(ProvenanceObject):
         """
         url = dfa_url + '/pde/task/json'
         message = self.get_specification()
+        print(message)
         r = requests.post(url, json=message)
         print(r.status_code)        

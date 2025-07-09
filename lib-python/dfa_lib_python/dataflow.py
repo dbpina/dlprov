@@ -19,10 +19,11 @@ class Dataflow(ProvenanceObject):
         - tag (str): Dataflow tag.
         - transformations (list, optional): Dataflow transformations.
     """
-    def __init__(self, tag, predefined=False, transformations=[]):
+    def __init__(self, tag, predefined=False, email="", transformations=[]):
         ProvenanceObject.__init__(self, tag)
         self.transformations = transformations
         self.predefined = predefined
+        self.email = email
 
     @property
     def transformations(self):
@@ -134,12 +135,23 @@ class Dataflow(ProvenanceObject):
             tf3_output_model.set_type(SetType.INPUT)
             tf3_output_model.dependency=tf3._tag
             tf4.set_sets([tf2_test_output, tf3_output_model, tf4_output])
-            self.add_transformation(tf4)    
+            self.add_transformation(tf4)   
+
+    @property
+    def email(self):
+        return self._email
+
+    @email.setter
+    def email(self, email):
+        assert isinstance(email, str), \
+            "The email must be in a string."
+        self._email= email        
 
     def save(self):
         """ Send a post request to the Dataflow Analyzer API to store
             the dataflow.
         """
         url = dfa_url + '/pde/dataflow/json'
+        print(self.get_specification())
         r = requests.post(url, json=self.get_specification())  
         print(r.status_code)

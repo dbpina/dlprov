@@ -17,7 +17,7 @@ CREATE SEQUENCE "exec_id_seq" as integer START WITH 1;
 CREATE SEQUENCE "file_id_seq" as integer START WITH 1;
 CREATE SEQUENCE "performance_id_seq" as integer START WITH 1;
 CREATE SEQUENCE "user_id_seq" as integer START WITH 1;
-CREATE SEQUENCE "computational_id_seq" as integer START WITH 1;
+CREATE SEQUENCE "hardware_id_seq" as integer START WITH 1;
 
 
 -- tables
@@ -112,29 +112,28 @@ CREATE TABLE attribute(
 	FOREIGN KEY ("extractor_id") REFERENCES extractor("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+CREATE TABLE data_scientist(
+	id INTEGER DEFAULT NEXT VALUE FOR "public"."user_id_seq" NOT NULL,
+	email VARCHAR(50) NOT NULL,
+	PRIMARY KEY ("id")
+);
+
+CREATE TABLE hardware(
+	id INTEGER DEFAULT NEXT VALUE FOR "public"."hardware_id_seq" NOT NULL,
+	information VARCHAR(50) NOT NULL,
+	PRIMARY KEY ("id")
+);
+
 CREATE TABLE dataflow_execution(
 	id INTEGER DEFAULT NEXT VALUE FOR "public"."exec_id_seq" NOT NULL,
 	tag VARCHAR(50) NOT NULL,
 	df_id INTEGER NOT NULL,
+	scientist_id INTEGER,
+	hardware_id INTEGER,
 	PRIMARY KEY ("tag"),
-	FOREIGN KEY ("df_id") REFERENCES dataflow("id") ON DELETE CASCADE ON UPDATE CASCADE
-);
-
-CREATE TABLE data_scientist(
-	id INTEGER DEFAULT NEXT VALUE FOR "public"."user_id_seq" NOT NULL,
-	name VARCHAR(50) NOT NULL,
-	email VARCHAR(50),
-	df_exec VARCHAR(50) NOT NULL,
-	PRIMARY KEY ("id"),
-	FOREIGN KEY ("df_exec") REFERENCES dataflow_execution("tag") ON DELETE CASCADE ON UPDATE CASCADE
-);
-
-CREATE TABLE computational_environment(
-	id INTEGER DEFAULT NEXT VALUE FOR "public"."computational_id_seq" NOT NULL,
-	information VARCHAR(50) NOT NULL,
-	df_exec VARCHAR(50) NOT NULL,
-	PRIMARY KEY ("id"),
-	FOREIGN KEY ("df_exec") REFERENCES dataflow_execution("tag") ON DELETE CASCADE ON UPDATE CASCADE
+	FOREIGN KEY ("df_id") REFERENCES dataflow("id") ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY ("scientist_id") REFERENCES data_scientist("id") ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY ("hardware_id") REFERENCES hardware("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE task(
@@ -285,12 +284,24 @@ BEGIN
 	RETURN SELECT id FROM attribute WHERE ds_id=dds_id AND name=vname;
 END;
 
+CREATE FUNCTION insertScientist (v_email VARCHAR(50))
+RETURNS INTEGER
+BEGIN
+	DECLARE v_scientist_id INTEGER;
+    SELECT sc.id INTO v_scientist_id FROM data_scientist sc WHERE sc.email=v_email;
+    IF(v_scientist_id IS NULL) THEN
+    	#SELECT NEXT VALUE FOR "df_id_seq" into v_df_id;
+    	INSERT INTO data_scientist(email) VALUES (v_email);
+	END IF;
+	RETURN SELECT sc.id FROM data_scientist sc WHERE sc.email=v_email;
+END;
+
 -- DROP FUNCTION insertDataflowExecution;
-CREATE FUNCTION insertDataflowExecution (etag VARCHAR(50),edf_id INTEGER)
+CREATE FUNCTION insertDataflowExecution (etag VARCHAR(50),edf_id INTEGER, esc_id INTEGER)
 RETURNS INTEGER
 BEGIN
 	DECLARE id INTEGER;
-    INSERT INTO dataflow_execution(tag,df_id) VALUES (etag,edf_id);
+    INSERT INTO dataflow_execution(tag,df_id,scientist_id) VALUES (etag,edf_id,esc_id);
 	RETURN SELECT dfe.id FROM dataflow_execution dfe WHERE dfe.id=get_value_for('public', 'exec_id_seq')-1;
 END;
 

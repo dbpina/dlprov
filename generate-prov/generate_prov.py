@@ -8,14 +8,23 @@ import json
 import argparse
 import re
 
-def main():
+
+def run(args_list=None):
     parser = argparse.ArgumentParser(description="Generate W3C document")
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--df_tag', type=str, help='Dataflow tag for generating W3C document for all executions.')
     group.add_argument('--df_exec', type=str, help='Dataflow execution tag for generating W3C document for a specific execution.')
 
-    args = parser.parse_args()
+    if args_list is None:
+        args = parser.parse_args()
+    else:
+        args = parser.parse_args(args_list)
+
+    if args.df_exec:
+        print(f"Generating W3C document for execution: {args.df_exec}")
+    elif args.df_tag:
+        print(f"Generating W3C document for tag: {args.df_tag}")
     
     prov_document = ProvDocument()
     prov_document.add_namespace('dlprov', 'DLProv')  
@@ -38,8 +47,10 @@ def main():
         w3c_name = f'{args.df_tag}' 
     elif args.df_exec:
         print(f"Generating W3C document for specific execution: {args.df_exec}")
-        generate_w3c_for_specific_execution(args.df_exec, cursor, prov_document)
-        w3c_name = f'{args.df_exec}' 
+        generate_w3c_for_specific_execution(args.df_exec, cursor, prov_document) 
+        w3c_name = f'{args.df_exec}'.replace(" ", "_")
+        w3c_name = re.sub(r"[/:]", "-", w3c_name)  # Replace slashes and colons
+        w3c_name = re.sub(r"[^\w\-.]", "", w3c_name)
 
     cursor.close()
     conn.close()                
@@ -77,7 +88,7 @@ def generate_each_execution(df_tag, df_exec, prov_df_exec_activity, cursor, prov
     dt_ids, dt_tags = [row[0] for row in items], [row[1] for row in items]
     dts = {dt_ids[i]: dt_tags[i] for i in range(len(dt_ids))}
 
-    query_1 = f"SELECT id, dt_id FROM \"public\".task WHERE df_version = (SELECT version FROM \"public\".dataflow_version WHERE df_id = '{df_id}');"
+    query_1 = f"SELECT id, dt_id FROM \"public\".task WHERE df_exec = '{df_exec}' AND df_version = (SELECT version FROM \"public\".dataflow_version WHERE df_id = '{df_id}');"
     cursor.execute(query_1)
     items = cursor.fetchall()
     task_ids, task_dt_ids = [row[0] for row in items], [row[1] for row in items]
@@ -98,7 +109,7 @@ def generate_each_execution(df_tag, df_exec, prov_df_exec_activity, cursor, prov
         the_activities_dict[task_id] = prov_activity
         prov_document.wasInformedBy(prov_activity, prov_df_exec_activity)
 
-        query_2 = f"SELECT id FROM \"public\".task WHERE dt_id = {tasks_dt[task_id]};"
+        query_2 = f"SELECT id FROM \"public\".task WHERE dt_id = {tasks_dt[task_id]} AND df_exec = '{df_exec}';"
         cursor.execute(query_2)
         tasks[tasks_dt[task_id]] = [row[0] for row in cursor.fetchall()]
 
@@ -261,5 +272,5 @@ def generate_w3c_for_specific_execution(df_exec, cursor, prov_document):
     generate_each_execution(df_tag, df_exec, prov_df_exec_activity, cursor, prov_document)        
 
 if __name__ == "__main__":
-    main()
+    run()
 

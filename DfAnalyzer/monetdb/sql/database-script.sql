@@ -23,6 +23,7 @@ CREATE SEQUENCE "hardware_id_seq" as integer START WITH 1;
 -- tables
 CREATE TABLE dataflow(
 	id INTEGER DEFAULT NEXT VALUE FOR "public"."df_id_seq" NOT NULL,
+	uuid VARCHAR(36),
 	tag VARCHAR(50) NOT NULL,
 	PRIMARY KEY ("id")
 );
@@ -30,12 +31,14 @@ CREATE TABLE dataflow(
 CREATE TABLE dataflow_version(
 	version INTEGER DEFAULT NEXT VALUE FOR "public"."version_id_seq" NOT NULL,
 	df_id INTEGER NOT NULL,
+	uuid VARCHAR(36),
 	PRIMARY KEY ("version"),
 	FOREIGN KEY ("df_id") REFERENCES dataflow("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE data_transformation(
 	id INTEGER DEFAULT NEXT VALUE FOR "public"."dt_id_seq" NOT NULL,
+	uuid VARCHAR(36),
 	df_id INTEGER NOT NULL,
 	tag VARCHAR(50) NOT NULL,
 	PRIMARY KEY ("id"),
@@ -44,6 +47,7 @@ CREATE TABLE data_transformation(
 
 CREATE TABLE program(
 	id INTEGER DEFAULT NEXT VALUE FOR "public"."program_id_seq" NOT NULL,
+	uuid VARCHAR(36),	
 	df_id INTEGER NOT NULL,
 	name VARCHAR(200) NOT NULL,
 	path VARCHAR(500) NOT NULL,
@@ -54,6 +58,7 @@ CREATE TABLE program(
 CREATE TABLE use_program(
 	dt_id INTEGER NOT NULL,
 	program_id INTEGER NOT NULL,
+	uuid VARCHAR(36),
 	PRIMARY KEY ("dt_id","program_id"),
 	FOREIGN KEY ("dt_id") REFERENCES data_transformation("id") ON DELETE CASCADE ON UPDATE CASCADE,
 	FOREIGN KEY ("program_id") REFERENCES program("id") ON DELETE CASCADE ON UPDATE CASCADE
@@ -61,6 +66,7 @@ CREATE TABLE use_program(
 
 CREATE TABLE data_set(
 	id INTEGER DEFAULT NEXT VALUE FOR "public"."ds_id_seq" NOT NULL,
+	uuid VARCHAR(36),
 	df_id INTEGER NOT NULL,
 	tag VARCHAR(50) NOT NULL,
 	PRIMARY KEY ("id"),
@@ -69,6 +75,7 @@ CREATE TABLE data_set(
 
 CREATE TABLE data_dependency(
 	id INTEGER DEFAULT NEXT VALUE FOR "public"."dd_id_seq" NOT NULL,
+	uuid VARCHAR(36),	
 	previous_dt_id INTEGER,
 	next_dt_id INTEGER,
 	ds_id INTEGER NOT NULL,
@@ -80,6 +87,7 @@ CREATE TABLE data_dependency(
 
 CREATE TABLE extractor(
 	id INTEGER DEFAULT NEXT VALUE FOR "public"."extractor_id_seq" NOT NULL,
+	uuid VARCHAR(36),	
 	ds_id INTEGER NOT NULL,
 	tag VARCHAR(20) NOT NULL,
 	cartridge VARCHAR(20) NOT NULL,
@@ -90,6 +98,7 @@ CREATE TABLE extractor(
 
 CREATE TABLE extractor_combination(
 	id INTEGER DEFAULT NEXT VALUE FOR "public"."ecombination_id_seq" NOT NULL,
+	uuid VARCHAR(36),	
 	ds_id INTEGER NOT NULL,
 	outer_ext_id INTEGER NOT NULL,
 	inner_ext_id INTEGER NOT NULL,
@@ -103,6 +112,7 @@ CREATE TABLE extractor_combination(
 
 CREATE TABLE attribute(
 	id INTEGER DEFAULT NEXT VALUE FOR "public"."att_id_seq" NOT NULL,
+	uuid VARCHAR(36),	
 	ds_id INTEGER NOT NULL,
 	extractor_id INTEGER,
 	name VARCHAR(30),
@@ -114,18 +124,32 @@ CREATE TABLE attribute(
 
 CREATE TABLE data_scientist(
 	id INTEGER DEFAULT NEXT VALUE FOR "public"."user_id_seq" NOT NULL,
+	uuid VARCHAR(36),	
 	email VARCHAR(50) NOT NULL,
 	PRIMARY KEY ("id")
 );
 
-CREATE TABLE hardware(
+CREATE TABLE hardware_info(
 	id INTEGER DEFAULT NEXT VALUE FOR "public"."hardware_id_seq" NOT NULL,
-	information VARCHAR(50) NOT NULL,
+	uuid VARCHAR(36),	
+	hostname VARCHAR(50) NOT NULL,
+	os VARCHAR(50),  
+	platform VARCHAR(50), 
+	architecture VARCHAR(50), 
+	processor VARCHAR(50) , 
+    ram_total_gb DOUBLE, 
+    ram_limit_gb DOUBLE, 
+    disk_total_gb DOUBLE, 
+    disk_used_gb DOUBLE, 
+    disk_free_gb DOUBLE,
+	gpus VARCHAR(50), 
+	in_container BOOLEAN,
 	PRIMARY KEY ("id")
 );
 
 CREATE TABLE dataflow_execution(
 	id INTEGER DEFAULT NEXT VALUE FOR "public"."exec_id_seq" NOT NULL,
+	uuid VARCHAR(36),	
 	tag VARCHAR(50) NOT NULL,
 	df_id INTEGER NOT NULL,
 	scientist_id INTEGER,
@@ -133,11 +157,12 @@ CREATE TABLE dataflow_execution(
 	PRIMARY KEY ("tag"),
 	FOREIGN KEY ("df_id") REFERENCES dataflow("id") ON DELETE CASCADE ON UPDATE CASCADE,
 	FOREIGN KEY ("scientist_id") REFERENCES data_scientist("id") ON DELETE CASCADE ON UPDATE CASCADE,
-	FOREIGN KEY ("hardware_id") REFERENCES hardware("id") ON DELETE CASCADE ON UPDATE CASCADE
+	FOREIGN KEY ("hardware_id") REFERENCES hardware_info("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE task(
 	id INTEGER DEFAULT NEXT VALUE FOR "public"."task_id_seq" NOT NULL,
+	uuid VARCHAR(36),	
 	identifier INTEGER NOT NULL,
 	df_version INTEGER NOT NULL,
 	df_exec VARCHAR(50) NOT NULL,
@@ -155,6 +180,7 @@ CREATE TABLE task(
 
 CREATE TABLE file(
 	id INTEGER DEFAULT NEXT VALUE FOR "public"."file_id_seq" NOT NULL,
+	uuid VARCHAR(36),	
 	task_id INTEGER NOT NULL,
 	name VARCHAR(200) NOT NULL,
 	path VARCHAR(500) NOT NULL,
@@ -164,6 +190,7 @@ CREATE TABLE file(
 
 CREATE TABLE performance(
 	id INTEGER DEFAULT NEXT VALUE FOR "public"."performance_id_seq" NOT NULL,
+	uuid VARCHAR(36),	
 	task_id INTEGER NOT NULL,	
 	subtask_id INTEGER,	
 	method VARCHAR(30) NOT NULL,
@@ -296,12 +323,75 @@ BEGIN
 	RETURN SELECT sc.id FROM data_scientist sc WHERE sc.email=v_email;
 END;
 
+
+CREATE FUNCTION insertHardwareInfo(
+    vhostname VARCHAR(50), 
+    vos VARCHAR(50), 
+    vplatform VARCHAR(50), 
+    varchitecture VARCHAR(50), 
+    vprocessor VARCHAR(50), 
+    vramTotal DOUBLE, 
+    vramLimit DOUBLE, 
+    vdiskTotal DOUBLE, 
+    vdiskUsed DOUBLE, 
+    vdiskFree DOUBLE, 
+    vgpus VARCHAR(50), 
+    vinContainer BOOLEAN
+)
+RETURNS INTEGER
+BEGIN
+    DECLARE v_hw_id INTEGER;
+
+    SELECT id INTO v_hw_id FROM hardware_info
+    WHERE hostname = vhostname
+      AND os = vos
+      AND platform = vplatform
+      AND architecture = varchitecture
+      AND processor = vprocessor
+      AND ram_total_gb = vramTotal
+      AND ram_limit_gb = vramLimit
+      AND disk_total_gb = vdiskTotal
+      AND disk_used_gb = vdiskUsed
+      AND disk_free_gb = vdiskFree
+      AND gpus = vgpus
+      AND in_container = vinContainer;
+
+    IF (v_hw_id IS NULL) THEN
+        INSERT INTO hardware_info (
+            hostname, os, platform, architecture, processor,
+            ram_total_gb, ram_limit_gb,
+            disk_total_gb, disk_used_gb, disk_free_gb,
+            gpus, in_container
+        ) VALUES (
+            vhostname, vos, vplatform, varchitecture, vprocessor,
+            vramTotal, vramLimit,
+            vdiskTotal, vdiskUsed, vdiskFree,
+            vgpus, vinContainer
+        );
+	END IF;
+	RETURN SELECT id FROM hardware_info
+		WHERE hostname IS NOT DISTINCT FROM vhostname
+		AND os IS NOT DISTINCT FROM vos
+		AND platform IS NOT DISTINCT FROM vplatform
+		AND architecture IS NOT DISTINCT FROM varchitecture
+		AND processor IS NOT DISTINCT FROM vprocessor
+		AND ram_total_gb IS NOT DISTINCT FROM vramTotal
+		AND ram_limit_gb IS NOT DISTINCT FROM vramLimit
+		AND disk_total_gb IS NOT DISTINCT FROM vdiskTotal
+		AND disk_used_gb IS NOT DISTINCT FROM vdiskUsed
+		AND disk_free_gb IS NOT DISTINCT FROM vdiskFree
+		AND gpus IS NOT DISTINCT FROM vgpus
+		AND in_container IS NOT DISTINCT FROM vinContainer;
+
+END;
+
+
 -- DROP FUNCTION insertDataflowExecution;
-CREATE FUNCTION insertDataflowExecution (etag VARCHAR(50),edf_id INTEGER, esc_id INTEGER)
+CREATE FUNCTION insertDataflowExecution (etag VARCHAR(50),edf_id INTEGER, esc_id INTEGER, ehw_id INTEGER)
 RETURNS INTEGER
 BEGIN
 	DECLARE id INTEGER;
-    INSERT INTO dataflow_execution(tag,df_id,scientist_id) VALUES (etag,edf_id,esc_id);
+    INSERT INTO dataflow_execution(tag,df_id,scientist_id,hardware_id) VALUES (etag,edf_id,esc_id,ehw_id);
 	RETURN SELECT dfe.id FROM dataflow_execution dfe WHERE dfe.id=get_value_for('public', 'exec_id_seq')-1;
 END;
 

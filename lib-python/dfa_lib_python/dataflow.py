@@ -60,18 +60,19 @@ class Dataflow(ProvenanceObject):
         if(predefined == True):
             assert isinstance(predefined, bool), \
                 "The parameter must must be a user."   
+                
             tf1 = Transformation("LoadData")
             tf1_input = Set("iInputDataset", SetType.INPUT, 
                 [Attribute("DATASET_NAME", AttributeType.TEXT), 
                 Attribute("DATASET_SOURCE", AttributeType.TEXT)])
             tf1_output = Set("oLoadData", SetType.OUTPUT, 
-                [Attribute("DATASET_DIR", AttributeType.TEXT)])
+                [Attribute("DATASET_DIR", AttributeType.FILE)])
             tf1.set_sets([tf1_input, tf1_output])
             self.add_transformation(tf1)
 
             # tf1_1 = Transformation("RandomHorizontal")
             # tf1_1_output = Set("oRandomHorizontal", SetType.OUTPUT, 
-            #     [Attribute("DATASET_DIR", AttributeType.TEXT)])
+            #     [Attribute("DATASET_DIR", AttributeType.FILE)])
             # tf1_output.set_type(SetType.INPUT)
             # tf1_output.dependency=tf1._tag
             # tf1_1.set_sets([tf1_output, tf1_1_output])
@@ -79,7 +80,7 @@ class Dataflow(ProvenanceObject):
 
             # tf1_2 = Transformation("Normalize")
             # tf1_2_output = Set("oNormalize", SetType.OUTPUT, 
-            #     [Attribute("DATASET_DIR", AttributeType.TEXT)])
+            #     [Attribute("DATASET_DIR", AttributeType.FILE)])
             # tf1_1_output.set_type(SetType.INPUT)
             # tf1_1_output.dependency=tf1_1._tag
             # tf1_2.set_sets([tf1_1_output, tf1_2_output])
@@ -91,11 +92,11 @@ class Dataflow(ProvenanceObject):
                 Attribute("VAL_RATIO", AttributeType.NUMERIC),
                 Attribute("TEST_RATIO", AttributeType.NUMERIC)])
             tf2_train_output = Set("oTrainSet", SetType.OUTPUT, 
-                [Attribute("TrainSet", AttributeType.TEXT)])
+                [Attribute("TrainSet", AttributeType.FILE)])
             tf2_val_output = Set("oValSet", SetType.OUTPUT, 
-                [Attribute("ValSet", AttributeType.TEXT)])            
+                [Attribute("ValSet", AttributeType.FILE)])            
             tf2_test_output = Set("oTestSet", SetType.OUTPUT, 
-                [Attribute("TestSet", AttributeType.TEXT)])
+                [Attribute("TestSet", AttributeType.FILE)])
             tf1_output.set_type(SetType.INPUT)
             tf1_output.dependency=tf1._tag
             tf2.set_sets([tf1_output, tf2_input, tf2_train_output, tf2_val_output, tf2_test_output])            
@@ -118,12 +119,14 @@ class Dataflow(ProvenanceObject):
                 Attribute("EPOCH", AttributeType.NUMERIC)])
             tf3_output_model = Set("oTrainedModel", SetType.OUTPUT, 
                 [Attribute("MODEL_NAME", AttributeType.TEXT),
-                Attribute("MODEL_DIR", AttributeType.TEXT)])
+                Attribute("MODEL_DIR", AttributeType.FILE)])
+            tf3_output_weights = Set("oWeights", SetType.OUTPUT, 
+                [Attribute("WEIGHTS_PATH", AttributeType.FILE)])            
             tf2_train_output.set_type(SetType.INPUT)
             tf2_train_output.dependency=tf2._tag
             tf2_val_output.set_type(SetType.INPUT)
             tf2_val_output.dependency=tf2._tag            
-            tf3.set_sets([tf2_train_output, tf2_val_output, tf3_input, tf3_output, tf3_output_model])
+            tf3.set_sets([tf2_train_output, tf2_val_output, tf3_input, tf3_output, tf3_output_model, tf3_output_weights])
             self.add_transformation(tf3)
 
             tf4 = Transformation("Test")
@@ -135,7 +138,8 @@ class Dataflow(ProvenanceObject):
             tf3_output_model.set_type(SetType.INPUT)
             tf3_output_model.dependency=tf3._tag
             tf4.set_sets([tf2_test_output, tf3_output_model, tf4_output])
-            self.add_transformation(tf4)   
+            self.add_transformation(tf4)                
+  
 
     @property
     def email(self):

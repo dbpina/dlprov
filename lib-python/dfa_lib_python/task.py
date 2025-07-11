@@ -6,6 +6,9 @@ from .task_status import TaskStatus
 from .dataset import DataSet
 from .performance import Performance
 from datetime import datetime
+from .system_info import get_system_info
+import json  
+
 
 
 dfa_url = os.environ.get('DFA_URL',"http://localhost:22000/")
@@ -34,6 +37,7 @@ class Task(ProvenanceObject):
         self._dataflow_tag = dataflow._tag
         self._email = dataflow.email
         self._exec = exec_tag
+        self._hardware = None
         self._workspace = workspace
         self._resource = resource
         self._dependency = ""
@@ -50,6 +54,7 @@ class Task(ProvenanceObject):
         self.dfa_url = dfa_url
         self.start_time = None
         self.end_time = None
+        self.uuid = None
         # if isinstance(dependency, Task):
         #     dependency = Dependency([dependency._tag], [dependency._id])
         #     self._dependency = dependency.get_specification()
@@ -109,6 +114,8 @@ class Task(ProvenanceObject):
         self.start_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         if(self.get_specification()['id'] == str(1)):
             self._first = str(1)
+            system_info = get_system_info()
+            self._hardware = json.dumps(system_info)
         self.save()
         self._sets = []
         self._first = str(0)    
@@ -127,6 +134,7 @@ class Task(ProvenanceObject):
         """ Send a post request to the Dataflow Analyzer API to store the Task.
         """
         url = dfa_url + '/pde/task/json'
+        self.uuid = uuid.uuid4()
         message = self.get_specification()
         print(message)
         r = requests.post(url, json=message)

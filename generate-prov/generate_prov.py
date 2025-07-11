@@ -42,12 +42,10 @@ def run(args_list=None):
     cursor = conn.cursor()
 
     if args.df_tag:
-        print(f"Generating W3C document for all execution of a dataflow: {args.df_tag}")
-        generate_w3c_for_all_runs(args.df_tag, cursor, prov_document)
+        generate_w3c_for_all_runs(args.df_tag, cursor, conn, prov_document)
         w3c_name = f'{args.df_tag}' 
     elif args.df_exec:
-        print(f"Generating W3C document for specific execution: {args.df_exec}")
-        generate_w3c_for_specific_execution(args.df_exec, cursor, prov_document) 
+        generate_w3c_for_specific_execution(args.df_exec, cursor, conn, prov_document) 
         w3c_name = f'{args.df_exec}'.replace(" ", "_")
         w3c_name = re.sub(r"[/:]", "-", w3c_name)  # Replace slashes and colons
         w3c_name = re.sub(r"[^\w\-.]", "", w3c_name)
@@ -77,7 +75,47 @@ def run(args_list=None):
     with open(full_filename_json, 'w') as f:
         f.write(prov_n_content)                
 
-def generate_each_execution(df_tag, df_exec, prov_df_exec_activity, cursor, prov_document): 
+import uuid
+
+def ensure_table_uuid(cursor, conn, schema, table, id_column, id_value, extra_where_clause=None, extra_params=None):
+    """
+    Ensures a UUID exists for a record in any table. Returns the existing UUID or sets a new one.
+
+    Parameters:
+        cursor: Database cursor
+        conn: Database connection
+        schema (str): Schema name (e.g., 'public')
+        table (str): Table name (e.g., 'dataflow')
+        id_column (str): Name of the primary key column (e.g., 'id', 'tag')
+        id_value (Any): Value of the primary key
+        extra_where_clause (str): Optional additional WHERE clause (e.g., "AND df_exec = %s")
+        extra_params (tuple): Parameters to match the extra_where_clause, if provided
+
+    Returns:
+        str: UUID (either existing or newly inserted)
+    """
+
+    where_clause = f"{id_column} = %s"
+    params = [id_value]
+
+    if extra_where_clause and extra_params:
+        where_clause += f" {extra_where_clause}"
+        params.extend(extra_params)
+
+    select_query = f'SELECT uuid FROM "{schema}"."{table}" WHERE {where_clause};'
+    cursor.execute(select_query, tuple(params))
+    result = cursor.fetchone()
+
+    if result and result[0] is not None:
+        return str(result[0])
+
+    new_uuid = str(uuid.uuid4())
+    update_query = f'UPDATE "{schema}"."{table}" SET uuid = %s WHERE {where_clause};'
+    cursor.execute(update_query, tuple([new_uuid] + params))
+    conn.commit()
+    return new_uuid
+
+def generate_each_execution(df_tag, df_exec, prov_df_exec_activity, cursor, conn, prov_document): 
     query_0 = f"SELECT id FROM \"public\".dataflow WHERE tag = '{df_tag}';"
     cursor.execute(query_0)
     df_id = cursor.fetchone()[0]
@@ -103,7 +141,8 @@ def generate_each_execution(df_tag, df_exec, prov_df_exec_activity, cursor, prov
     for task_id in task_ids:
         other_attributes["dlprov:dt_tag"] = dts[tasks_dt[task_id]]
         other_attributes["dlprov:task_id"] = task_id
-        activity_id = 'dlprov:' + str(uuid.uuid4())
+        uuid_task = ensure_table_uuid(cursor, conn, "public", "task", "id", task_id, extra_where_clause="AND df_exec = %s", extra_params=(df_exec,))
+        activity_id = "dlprov:" + str(uuid_task)
         prov_activity = prov_document.activity(activity_id, other_attributes=other_attributes)
         the_activities.append(prov_activity)
         the_activities_dict[task_id] = prov_activity
@@ -124,153 +163,237 @@ def generate_each_execution(df_tag, df_exec, prov_df_exec_activity, cursor, prov
     the_entities = []
     entities_dict = {}
 
-    with open("output_log.txt", "w") as file:
-        for ds_tag in ds_tags:
-            file.write(f"Processing ds_tag: {ds_tag}\n")
-            query = f"SELECT name FROM \"public\".attribute WHERE ds_id = {res[ds_tag]};"
+    #with open("output_log.txt", "w") as file:
+    for ds_tag in ds_tags:
+        #file.write(f"Processing ds_tag: {ds_tag}\n")
+        query = f"SELECT name FROM \"public\".attribute WHERE ds_id = {res[ds_tag]};"
+        cursor.execute(query)
+        #attribute_list = [row[0] for row in cursor.fetchall()]
+        attribute_list = ['id'] + [row[0] for row in cursor.fetchall()]
+
+        query = f"SELECT previous_dt_id, next_dt_id FROM \"public\".data_dependency WHERE ds_id = {res[ds_tag]};"
+        cursor.execute(query)
+        rows = cursor.fetchall()  # Fetch all rows
+
+        for row in rows:  # Iterate through each row
+            #file.write(f"Row for ds_tag {ds_tag}: {row}\n")
+            previous_dt_id, next_dt_id = row[0], row[1]
+
+            # Handle None values as needed
+            if previous_dt_id is None and next_dt_id is None:
+                continue  # Skip if both IDs are None
+
+            # Construct the SELECT clause by joining the attribute names
+            select_clause = ', '.join(attribute_list)
+
+    
+            # If no entity exists for this ds_tag, create a new one
+            #query = f"SELECT {select_clause} FROM \"{df_tag}\".{ds_tag} WHERE "
+
+            if previous_dt_id is None and next_dt_id is not None:
+                select_clause = ', '.join([select_clause, f"{dts[next_dt_id]}_task_id"])
+                query = f"SELECT {select_clause} FROM \"{df_tag}\".{ds_tag} WHERE "
+                task_ids = ', '.join(map(str, tasks[next_dt_id]))  # Convert list to string
+                query += f"{dts[next_dt_id]}_task_id IN ({task_ids});"
+                my_type = "used"
+            elif previous_dt_id is not None and next_dt_id is None:
+                select_clause = ', '.join([select_clause, f"{dts[previous_dt_id]}_task_id"])
+                query = f"SELECT {select_clause} FROM \"{df_tag}\".{ds_tag} WHERE "
+                task_ids = ', '.join(map(str, tasks[previous_dt_id]))
+                query += f"{dts[previous_dt_id]}_task_id IN ({task_ids});"
+                my_type = "generated"
+            elif previous_dt_id is not None and next_dt_id is not None:
+                select_clause = ', '.join([select_clause, f"{dts[previous_dt_id]}_task_id", f"{dts[next_dt_id]}_task_id"])
+                query = f"SELECT {select_clause} FROM \"{df_tag}\".{ds_tag} WHERE "
+                previous_task_ids = ', '.join(map(str, tasks[previous_dt_id]))
+                next_task_ids = ', '.join(map(str, tasks[next_dt_id]))
+                query += (
+                    f"{dts[previous_dt_id]}_task_id IN ({previous_task_ids}) "
+                    f"AND {dts[next_dt_id]}_task_id IN ({next_task_ids});"
+                )
+                my_type = "both"
+
             cursor.execute(query)
-            attribute_list = [row[0] for row in cursor.fetchall()]
+            rows_data = cursor.fetchall()
 
-            query = f"SELECT previous_dt_id, next_dt_id FROM \"public\".data_dependency WHERE ds_id = {res[ds_tag]};"
-            cursor.execute(query)
-            rows = cursor.fetchall()  # Fetch all rows
+            # Create a new prov_entity for the ds_tag
+            other_attributes = {}
+            for row_data in rows_data:
+                #file.write(f"Row data for ds_tag {ds_tag}: {row_data}\n")
+                uuid_ds = ensure_table_uuid(cursor, conn, df_tag, "ds_" + ds_tag, "id", row_data[0])
+                entity_id = 'dlprov:' + str(uuid_ds)
+                other_attributes["dlprov:ds_tag"] = ds_tag
 
-            for row in rows:  # Iterate through each row
-                file.write(f"Row for ds_tag {ds_tag}: {row}\n")
-                previous_dt_id, next_dt_id = row[0], row[1]
+                if my_type == "both":
+                    used_task = row_data[-1]
+                    generated_task = row_data[-2]
+                    row_data = row_data[:-2]
+                elif my_type == "generated":
+                    generated_task = row_data[-1]
+                    row_data = row_data[:-1]
+                elif my_type == "used":
+                    used_task = row_data[-1]
+                    row_data = row_data[:-1]
 
-                # Handle None values as needed
-                if previous_dt_id is None and next_dt_id is None:
-                    continue  # Skip if both IDs are None
+                for i in range(len(row_data)):
+                    other_attributes["dlprov:" + attribute_list[i]] = row_data[i]
 
-                # Construct the SELECT clause by joining the attribute names
-                select_clause = ', '.join(attribute_list)
+                # Create the prov_entity and store it in the dictionary
+                prov_entity = prov_document.entity(entity_id, other_attributes=other_attributes)
+                if ds_tag not in entities_dict:
+                    entities_dict[ds_tag] = []
+                entities_dict[ds_tag].append(prov_entity)
+                the_entities.append(prov_entity)
 
-                # If no entity exists for this ds_tag, create a new one
-                #query = f"SELECT {select_clause} FROM \"{df_tag}\".{ds_tag} WHERE "
-
-                if previous_dt_id is None and next_dt_id is not None:
-                    select_clause = ', '.join([select_clause, f"{dts[next_dt_id]}_task_id"])
-                    query = f"SELECT {select_clause} FROM \"{df_tag}\".{ds_tag} WHERE "
-                    task_ids = ', '.join(map(str, tasks[next_dt_id]))  # Convert list to string
-                    query += f"{dts[next_dt_id]}_task_id IN ({task_ids});"
-                    my_type = "used"
-                elif previous_dt_id is not None and next_dt_id is None:
-                    select_clause = ', '.join([select_clause, f"{dts[previous_dt_id]}_task_id"])
-                    query = f"SELECT {select_clause} FROM \"{df_tag}\".{ds_tag} WHERE "
-                    task_ids = ', '.join(map(str, tasks[previous_dt_id]))
-                    query += f"{dts[previous_dt_id]}_task_id IN ({task_ids});"
-                    my_type = "generated"
-                elif previous_dt_id is not None and next_dt_id is not None:
-                    select_clause = ', '.join([select_clause, f"{dts[previous_dt_id]}_task_id", f"{dts[next_dt_id]}_task_id"])
-                    query = f"SELECT {select_clause} FROM \"{df_tag}\".{ds_tag} WHERE "
-                    previous_task_ids = ', '.join(map(str, tasks[previous_dt_id]))
-                    next_task_ids = ', '.join(map(str, tasks[next_dt_id]))
-                    query += (
-                        f"{dts[previous_dt_id]}_task_id IN ({previous_task_ids}) "
-                        f"AND {dts[next_dt_id]}_task_id IN ({next_task_ids});"
-                    )
-                    my_type = "both"
-
-                cursor.execute(query)
-                rows_data = cursor.fetchall()
-
-                # Create a new prov_entity for the ds_tag
-                other_attributes = {}
-                for row_data in rows_data:
-                    file.write(f"Row data for ds_tag {ds_tag}: {row_data}\n")
-                    entity_id = 'dlprov:' + str(uuid.uuid4())
-                    other_attributes["dlprov:ds_tag"] = ds_tag
-
-                    if my_type == "both":
-                        used_task = row_data[-1]
-                        generated_task = row_data[-2]
-                        row_data = row_data[:-2]
-                    elif my_type == "generated":
-                        generated_task = row_data[-1]
-                        row_data = row_data[:-1]
-                    elif my_type == "used":
-                        used_task = row_data[-1]
-                        row_data = row_data[:-1]
-
-                    for i in range(len(row_data)):
-                        other_attributes["dlprov:" + attribute_list[i]] = row_data[i]
-
-                    # Create the prov_entity and store it in the dictionary
-                    prov_entity = prov_document.entity(entity_id, other_attributes=other_attributes)
-                    if ds_tag not in entities_dict:
-                        entities_dict[ds_tag] = []
-                    entities_dict[ds_tag].append(prov_entity)
-                    the_entities.append(prov_entity)
-
-                    # Add the usage or generation relations
-                    if my_type == "used":
-                        prov_document.used(the_activities_dict[used_task], prov_entity)
-                    elif my_type == "generated":
-                        prov_document.wasGeneratedBy(prov_entity, the_activities_dict[generated_task])
-                    elif my_type == "both":
-                        prov_document.used(the_activities_dict[used_task], prov_entity)
-                        prov_document.wasGeneratedBy(prov_entity, the_activities_dict[generated_task]) 
+                # Add the usage or generation relations
+                if my_type == "used":
+                    prov_document.used(the_activities_dict[used_task], prov_entity)
+                elif my_type == "generated":
+                    prov_document.wasGeneratedBy(prov_entity, the_activities_dict[generated_task])
+                elif my_type == "both":
+                    prov_document.used(the_activities_dict[used_task], prov_entity)
+                    prov_document.wasGeneratedBy(prov_entity, the_activities_dict[generated_task])     
 
 
-def generate_w3c_for_all_runs(df_tag, cursor, prov_document):
-    dataflow_entity_id = 'dlprov:' + str(uuid.uuid4())
+
+def generate_w3c_for_all_runs(df_tag, cursor, conn, prov_document):
+    created_user_agents = set()
+    created_hw_agents = set()
+
+    query_dfid = f"SELECT id FROM \"public\".dataflow WHERE tag = '{df_tag}';"
+    cursor.execute(query_dfid)
+    result = cursor.fetchone()
+
+    if result:
+        df_id = result[0] 
+    else:
+        df_id = None
+
+    uuid_df = ensure_table_uuid(cursor, conn, "public", "dataflow", "id", df_id)
+    dataflow_entity_id = 'dlprov:' + str(uuid_df)
     dataflow_attributes = {
         "prov:type": "prov:Plan",
-        "dlprov:tag": df_tag
+        "dlprov:df_tag": df_tag,
+        "dlprov:df_id": df_id
     }
     prov_dataflow_entity = prov_document.entity(dataflow_entity_id, other_attributes=dataflow_attributes)
 
-    query_0 = f"SELECT tag FROM \"public\".dataflow_execution WHERE df_id = (SELECT id FROM dataflow WHERE tag = '{df_tag}');"
+    query_0 = f"SELECT tag FROM \"public\".dataflow_execution WHERE df_id = {df_id};"
     cursor.execute(query_0)
-    df_execs = [row[0] for row in cursor.fetchall()]
+    df_execs = [row[0] for row in cursor.fetchall()]   
 
-    for exec_tag in df_execs:  
-        df_exec_activity_id = 'dlprov:' + str(uuid.uuid4())
-        df_exec_attributes = {"dlprov:exec_tag": exec_tag}
+    for df_exec in df_execs:  
+        uuid_exec = ensure_table_uuid(cursor, conn, "public", "dataflow_execution", "tag", df_exec)
+        df_exec_activity_id = 'dlprov:' + str(uuid_exec)
+        df_exec_attributes = {"dlprov:exec_tag": df_exec}
         prov_df_exec_activity = prov_document.activity(df_exec_activity_id, other_attributes=df_exec_attributes)
 
-        prov_document.used(prov_df_exec_activity, prov_dataflow_entity)
+        prov_document.used(prov_df_exec_activity, prov_dataflow_entity)  
 
-        generate_each_execution(df_tag, exec_tag, prov_df_exec_activity, cursor, prov_document)
+        user_attributes = {}
+        hw_attributes = {}
 
-def generate_w3c_for_specific_execution(df_exec, cursor, prov_document):
-    query_0 = f"SELECT tag FROM \"public\".dataflow WHERE id = (SELECT df_id FROM \"public\".dataflow_execution WHERE tag = '{df_exec}');"
+        query_user = f"SELECT * FROM data_scientist WHERE id = (SELECT scientist_id FROM \"public\".dataflow_execution WHERE tag = '{df_exec}');"
+        cursor.execute(query_user)
+        row_user = cursor.fetchone()
+
+        if row_user:
+            columns = [desc[0] for desc in cursor.description]
+            for col, val in zip(columns, row_user):
+                user_attributes["dlprov:" + col] = val
+                if col == 'id':
+                    uuid_user = ensure_table_uuid(cursor, conn, "public", "data_scientist", "id", val)
+
+            entity_user_id = 'dlprov:' + str(uuid_user)
+            if entity_user_id not in created_user_agents:
+                user_agent = prov_document.agent(entity_user_id, other_attributes=user_attributes)
+                created_user_agents.add(entity_user_id)
+
+            prov_document.association(df_exec_activity_id, user_agent)
+
+
+        query_hw = f"SELECT * FROM hardware_info WHERE id = (SELECT hardware_id FROM \"public\".dataflow_execution WHERE tag = '{df_exec}');"
+        cursor.execute(query_hw)
+        row_hw = cursor.fetchone()
+
+        if row_hw:
+            columns = [desc[0] for desc in cursor.description]
+            for col, val in zip(columns, row_hw):
+                hw_attributes["dlprov:" + col] = val
+                if col == 'id':
+                    uuid_hw = ensure_table_uuid(cursor, conn, "public", "hardware_info", "id", val)
+
+            entity_hw_id = 'dlprov:' + str(uuid_hw)
+            if entity_hw_id not in created_hw_agents:
+                hw_agent = prov_document.agent(entity_hw_id, other_attributes=hw_attributes)
+                created_hw_agents.add(entity_hw_id)
+
+            prov_document.association(df_exec_activity_id, hw_agent)    
+
+        generate_each_execution(df_tag, df_exec, prov_df_exec_activity, cursor, conn, prov_document)
+
+def generate_w3c_for_specific_execution(df_exec, cursor, conn, prov_document):
+    query_0 = f"SELECT id, tag FROM \"public\".dataflow WHERE id = (SELECT df_id FROM \"public\".dataflow_execution WHERE tag = '{df_exec}');"
     cursor.execute(query_0)
-    df_tag = cursor.fetchone()[0]
+    result = cursor.fetchone()
 
-    dataflow_entity_id = 'dlprov:' + str(uuid.uuid4())
+    if result:
+        df_id = result[0] 
+        df_tag = result[1]
+    else:
+        df_id = None
+        df_tag = None
+
+    uuid_df = ensure_table_uuid(cursor, conn, "public", "dataflow", "id", df_id)
+    dataflow_entity_id = 'dlprov:' + str(uuid_df)
     dataflow_attributes = {
         "prov:type": "prov:Plan",
-        "dlprov:tag": df_tag
+        "dlprov:df_tag": df_tag,
+        "dlprov:df_id": df_id
     }
     prov_dataflow_entity = prov_document.entity(dataflow_entity_id, other_attributes=dataflow_attributes)
 
-    df_exec_activity_id = 'dlprov:' + str(uuid.uuid4())
+    uuid_exec = ensure_table_uuid(cursor, conn, "public", "dataflow_execution", "tag", df_exec)
+    df_exec_activity_id = 'dlprov:' + str(uuid_exec)
     df_exec_attributes = {"dlprov:exec_tag": df_exec}
     prov_df_exec_activity = prov_document.activity(df_exec_activity_id, other_attributes=df_exec_attributes)
 
     prov_document.used(prov_df_exec_activity, prov_dataflow_entity)
 
     user_attributes = {}
-    comp_env_attributes = {}
+    hw_attributes = {}
 
-    user_name = os.getlogin()
-    user_attributes["dlprov:name"] = user_name
-    entity_user_id = 'dlprov:' + str(uuid.uuid4())
-    user_entity = prov_document.agent(entity_user_id, other_attributes=user_attributes)    
+    query_user = f"SELECT * FROM data_scientist WHERE id = (SELECT scientist_id FROM \"public\".dataflow_execution WHERE tag = '{df_exec}');"
+    cursor.execute(query_user)
+    row_user = cursor.fetchone()
 
-    computational_env = "Ubuntu 22"
-    comp_env_attributes["dlprov:description"] = computational_env
-    comp_env_user_id = 'dlprov:' + str(uuid.uuid4())
-    comp_env_entity = prov_document.agent(comp_env_user_id, other_attributes=comp_env_attributes)  
+    if row_user:
+        columns = [desc[0] for desc in cursor.description]
+        for col, val in zip(columns, row_user):
+            user_attributes["dlprov:" + col] = val
+            if col == 'id':
+                uuid_user = ensure_table_uuid(cursor, conn, "public", "data_scientist", "id", val)            
+    entity_user_id = 'dlprov:' + str(uuid_user)
+    user_agent = prov_document.agent(entity_user_id, other_attributes=user_attributes)  
 
-    prov_document.association(df_exec_activity_id, user_entity)
+    query_hw = f"SELECT * FROM hardware_info WHERE id = (SELECT hardware_id FROM \"public\".dataflow_execution WHERE tag = '{df_exec}');"
+    cursor.execute(query_hw)
+    row_hw = cursor.fetchone()
 
-    prov_document.association(df_exec_activity_id, comp_env_entity)      
+    if row_hw:
+        columns = [desc[0] for desc in cursor.description]
+        for col, val in zip(columns, row_hw):
+            hw_attributes["dlprov:" + col] = val
+            if col == 'id':
+                uuid_hw = ensure_table_uuid(cursor, conn, "public", "hardware_info", "id", val)
+    entity_hw_id = 'dlprov:' + str(uuid_hw)
+    hw_agent = prov_document.agent(entity_hw_id, other_attributes=hw_attributes) 
 
-    generate_each_execution(df_tag, df_exec, prov_df_exec_activity, cursor, prov_document)        
+    prov_document.association(df_exec_activity_id, user_agent)
+
+    prov_document.association(df_exec_activity_id, hw_agent)      
+
+    generate_each_execution(df_tag, df_exec, prov_df_exec_activity, cursor, conn, prov_document)        
 
 if __name__ == "__main__":
     run()
-

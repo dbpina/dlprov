@@ -61,7 +61,7 @@ cd DfAnalyzer
 
 Due to Git LFS (Large File Storage) restrictions, this repository includes a file that cannot be tracked by Git. Please follow these steps to download and add the file manually:
 
-1. Download the file from [this Google Drive link](https://drive.google.com/drive/folders/1lqm0LBc1pCICQXPDl1b0tIcUtN5xnORC?usp=share_link).
+1. Download the file from [this Google Drive link](https://drive.google.com/file/d/12ICfutGJ0pULDpUXcdBVT0iCz03w0dlv/view?usp=share_link).
 
 
 2. After downloading the file, move it to the `dlprov/DfAnalyzer/target` folder in the repository.
@@ -110,7 +110,7 @@ We provide a pre-built Docker container image that includes all necessary depend
 To get started, pull the pre-built Docker image from the container registry:
 
 ```
-docker pull dbpina/dlprov
+docker pull dbpina/dlprov-ex1
 ```
 
 2. **Run the Container**
@@ -121,8 +121,17 @@ Once the image is downloaded, run the container with:
 docker run -p 7474:7474 -p 7687:7687 -p 22000:22000 -d \
   -e NEO4J_dbms_default__listen__address=0.0.0.0 \
   -e NEO4J_dbms_connector_http_listen__address=0.0.0.0 \
-  --name dlprov-container dbpina/dlprov
+  --name dlprov-container dbpina/dlprov-ex1
 ```    
+
+Important: If you are using a machine with ARM architecture (such as MacBooks with Apple M1 or M2 chips), use the option `--platform=linux/amd64` to ensure compatibility with the Docker image.
+
+```
+docker run --platform=linux/amd64 -p 7474:7474 -p 7687:7687 -p 22000:22000 -d \
+  -e NEO4J_dbms_default__listen__address=0.0.0.0 \
+  -e NEO4J_dbms_connector_http_listen__address=0.0.0.0 \
+  --name dlprov-container dbpina/dlprov-ex1
+```
 
 ```
 docker exec -it dlprov-container /bin/bash
@@ -139,7 +148,22 @@ cd /opt/dlprov/DfAnalyzer
 ./restore-database.sh
 ```
 
-After that, you navigate to the folder `/opt/dlprov/`, where you will find a script named `run_experiment.sh`. This script:
+Now you can start the server:
+```
+java -jar target/DfAnalyzer-2.0.jar &
+```
+
+The & at the end allows the server to run in the background, freeing up the terminal for other commands.
+
+Now you can run an example:
+
+```
+cd ..
+cd Example
+python filter-prov.py
+```
+
+<!-- After that, you navigate to the folder `/opt/dlprov/`, where you will find a script named `run_experiment.sh`. This script:
 
 - Starts the database and the server.
 - Runs an experiment that trains a DL model on the MNIST dataset (with only a few epochs; you can adjust the epoch count as needed).
@@ -151,7 +175,7 @@ To execute the script, use:
 ```
 cd /opt/dlprov/
 ./run_experiment.sh
-```
+``` -->
 
 4. **Submit a query**
 
@@ -177,7 +201,7 @@ SELECT * FROM dataflow_execution; (This will show the execution identifier.)
 To analyze data related to the training process, switch to the schema with:
 
 ```
-SET SCHEMA "mnist";
+SET SCHEMA "alexnet";
 ```
 
 Then, to view available tables, use:
@@ -200,73 +224,124 @@ SELECT * FROM otrainmodel; to view training metrics.
 SELECT * FROM otestmodel; to see test metrics.
 ```
 
-#### Submitting Queries to Neo4j
+#### Generating the **provenance document** for your chosen deep learning model involves identifying the specific execution and running a generation script based on the **W3C PROV standard**.
 
-To interact with Neo4j, open the following address in your browser:
-
-```
-http://localhost:7474
-```
-
-Note: This is why the docker run command includes the -p (publish) flag to make ports available externally.
-
-You may need to enter your credentials to access Neo4j. The default configuration is set with the following:
-
-- Username: neo4j
-- Password: neo4jneo4j
+Here is the improved Markdown guide:
 
 
-In Neo4j, you can submit queries such as:
+## Generating the DL Model Provenance Document
 
-```
-MATCH (n) RETURN n LIMIT 25;
+After exploring the provenance data in MonetDB, the next step is to select one of the analyzed runs as if it were the chosen model for deployment in a production environment. This choice should be based on the results observed in the queries performed, such as hyperparameter values, performance metrics (e.g., loss and accuracy), use of preprocessing, scientist responsible for the run, and the computational environment used.
+
+Based on the selected execution, you can generate a provenance document that follows the **W3C PROV standard**. This document allows you to visualize, in a structured way, the relationships between **entities**, **activities**, and **agents** involved in the execution, facilitating the understanding of the data flow.
+
+### 1\. Identify the Execution Identifier (`df_exec`)
+
+First, you need to find the specific **execution identifier** (`df_exec`) corresponding to your chosen model. You can obtain this value by querying the `dataflow_execution` table in **MonetDB**:
+
+```sql
+SELECT * FROM dataflow_execution;
 ```
 
-This query will display the complete graph of an execution, allowing you to analyze the relationships and data flow visually.
+### 2\. Run the Provenance Generation Script
 
+After locating the desired `df_exec` identifier, navigate to the generation directory and run the following command. **Replace `<include exec_tag>` with the value of the selected execution identifier.**
 
-5. **Generate provenance graph for several executions**
-
-If you would like to generate a W3C PROV document for multiple executions of the same DL model (for example, after running two training executions), you can do so by running the following script:
-
-```
-./run_df_experiment.sh
+```bash
+cd /opt/dlprov/generate-prov
+python generate_prov.py --df_exec "<include exec_tag>"
 ```
 
-This script first restores the Neo4j database, as the current Neo4j version only supports one active database. After the restoration, it generates the provenance document and inserts it into Neo4j, allowing you to analyze the provenance data using the commands previously provided.
 
+### 3\. Review the Output Files
 
-<!-- Note: Typically, a scientist can generate a provenance document for a specific dataflow or its executions by running one of the following commands:
+This command will create the provenance files related to the chosen execution in the `/opt/dlprov/generate-prov/output` directory. The generated files will have the following formats:
 
-```
-python /generate-prov/generate_prov.py --df_tag <df_tag>
-```
+  * **`.pdf`**: A **graphical visualization** based on the **PROV-DM** model.
+  * **`.json`**: The structured representation in **PROV-JSON** format, which is useful for programmatic analysis.
+  * **`.provn`**: The **textual representation** in **PROV-N** format.
 
-or
+### 4\. Output Comparison
 
-```
-python /generate-prov/generate_prov.py --df_exec <df_exec>
-```
-
-The <df_tag> or <df_exec> parameters let you select the specific dataflow or execution for provenance generation. However, for this proof-of-concept, we assume that only the mnist dataflow is available. -->
- 
-
-### Output Comparison
-
-That's it - you are all set! Now, you can check the folder `/opt/dlprov/generate-prov/output` where you will find the provenance document for your experiment, named something like `mnist-<timestamp>`. You can compare it with the example file, `mnist-example`, provided in the directory `/opt/dlprov/output/`. There are `.json`, `.provn`, and `.png` files for review and analysis.
+Now, you can check the folder `/opt/dlprov/generate-prov/output` where you will find the provenance document for your experiment, named something like `alexnet-<timestamp>`. You can compare it with the example file, `mnist-example`, provided in the directory `/opt/dlprov/output/`. There are `.json`, `.provn`, and `.png` files for review and analysis.
 
 **To visualize the PNG file, follow these steps:**
 
-1. Use the following command to copy the file from the Docker container to your host system:
+a. Use the following command to copy the file from the Docker container to your host system:
 ```
 docker cp dlprov-container:/opt/dlprov/output/<insert_file_name.png> </host/path/target>
 ```
 
 Replace <insert_file_name.png> with the actual name of your PNG file. Replace </host/path/target> with the desired destination path on your host system where you want to save the file.
 
-2. After executing the command, navigate to the specified target directory on your host to view the PNG file.
+b. After executing the command, navigate to the specified target directory on your host to view the PNG file.
 
-### Additional Queries in Neo4j
+## Exploring and Analyzing Provenance Data
+
+The files generated in the previous step (e.g., `.provn`, `.json`, `.pdf`) all contain the same provenance information but are represented in different formats. An important step for verification and detailed analysis is to leverage the **W3C PROV Validator** and the **Neo4j graph database**.
+
+### 1\. Validating the PROV-N Structure
+
+The **`.provn`** file provides a clean, textual representation of the provenance. For validation and a direct view using an official tool, you can:
+
+1.  Copy the contents of the generated **`.provn`** file.
+2.  Paste it into the **W3C PROV Validator** (e.g., `https://openprovenance.org/service/validator.html`).
+
+This allows you to validate the structure against the W3C PROV standard and inspect the data directly.
+
+
+### 2\. Ingesting Provenance Graphs into Neo4j
+
+After generating and inspecting the documents, the next step is to ingest the provenance data into the **Neo4j graph database** using the DLProv ingestor. This allows for powerful graph-based visualization and querying.
+
+#### Ingestion Command
+
+Execute the following command from the `generate-prov` directory. **Ensure you replace `<include tag>` with the execution identifier (`df_exec`) used to generate the files.**
+
+```bash
+python ingest_prov.py --file_name "<include tag>"
+```
+
+This command uses the provided **PROV Database Connector** to insert the graph into Neo4j.
+
+#### Accessing Neo4j
+
+To access the Neo4j web interface and verify that the graph was correctly inserted, open your browser and navigate to:
+
+```
+http://localhost:7474
+```
+
+> **Note:** The `docker run` command used in the setup process should have already exposed the necessary ports to allow this access.
+
+Use the default credentials if requested:
+
+  * **Username:** `neo4j`
+  * **Password:** `neo4jneo4j`
+
+#### Initial Verification Query (Cypher)
+
+Once inside the Neo4j interface, you can run the following **Cypher query** to display a sample of the ingested graph, confirming the presence of the entities, activities, and agents:
+
+```cypher
+MATCH (n) RETURN n LIMIT 25;
+```
+
+> **Difference between MonetDB and Neo4j:** **MonetDB** stores provenance in a **tabular format**, ideal for quantitative analysis. **Neo4j** allows you to visualize and explore provenance as a **graph**, which simplifies understanding the complex structure and derivation paths.
+
+### 3\. Analyzing Derivation Paths with Cypher Queries
+
+The central idea of this step is to develop and execute **Cypher queries** that explore the derivation paths and relationships within the provenance graph.
+
+#### Querying Principles
+
+Connect to the Neo4j browser and use the Cypher query language:
+
+  * **Select an entity** of interest (e.g., a file, a hyperparameter configuration, or a metric).
+  * **Traverse the graph** using relationships (like `:wasGeneratedBy`, `:used`, `:wasInformedBy`) to reconstruct the derivation path.
+  * Include the **`:wasAssociatedWith`** relationship to check which agents (users/scripts) participated in the activities.
+
+#### Example Cypher Queries for Analysis
 
 1. **Average Training Loss Query**  
 This query calculates the average loss for the training activity, providing insights into model performance over training iterations. Other metrics, such as elapsed time, can also be used in place of loss to analyze different aspects of the training process.
@@ -288,7 +363,7 @@ These queries find the shortest paths from the resulting test metrics to key com
 
 ```
 MATCH p = shortestPath(
-    (a:Entity {`dlprov:ds_tag`: 'otestmodel'})-[*]-
+    (a:Entity {`dlprov:ds_tag`: 'otest'})-[*]-
     (b:Entity {`dlprov:ds_tag`: 'oloaddata'})
 )
 RETURN p
@@ -296,8 +371,8 @@ RETURN p
 
 ```
 MATCH p = shortestPath(
-    (a:Entity {`dlprov:ds_tag`: 'otestmodel'})-[:wasGeneratedBy]-
-    (b:Activity {`dlprov:dt_tag`: 'testmodel'})
+    (a:Entity {`dlprov:ds_tag`: 'otest'})-[:wasGeneratedBy]-
+    (b:Activity {`dlprov:dt_tag`: 'test'})
 )
 RETURN p
 ```
@@ -306,13 +381,26 @@ RETURN p
 This query presents the full path from the resulting test metrics to the original input dataset, detailing each step in the data processing pipeline. Information about the dataset source and intermediate transformations is included to support data traceability.
 
 ```
-MATCH p = (a:Entity {`dlprov:ds_tag`: 'otestmodel'})-[*]-(b:Entity {`dlprov:ds_tag`: 'iinputdataset'})
+MATCH p = (a:Entity {`dlprov:ds_tag`: 'otest'})-[*]-(b:Entity {`dlprov:ds_tag`: 'iinputdataset'})
 RETURN p
 ```
 
 ### Note
 
 This project is a work in progress. If you encounter any issues, errors, or have suggestions for improvements, please feel free to contact us. We appreciate your feedback as we continue to refine and expand this project. 
+
+
+
+<!-- 5. **Generate provenance graph for several executions**
+
+If you would like to generate a W3C PROV document for multiple executions of the same DL model (for example, after running two training executions), you can do so by running the following script:
+
+```
+./run_df_experiment.sh
+```
+
+This script first restores the Neo4j database, as the current Neo4j version only supports one active database. After the restoration, it generates the provenance document and inserts it into Neo4j, allowing you to analyze the provenance data using the commands previously provided. -->
+ 
 
 
 <!-- ## Example

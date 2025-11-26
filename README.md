@@ -177,9 +177,7 @@ cd /opt/dlprov/
 ./run_experiment.sh
 ``` -->
 
-4. **Submit a query**
-
-#### Submitting Queries to MonetDB
+4. **Submitting Queries to MonetDB**
 
 To submit queries to MonetDB, connect to the database using the following command:
 

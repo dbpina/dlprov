@@ -17,12 +17,13 @@ CREATE SEQUENCE "exec_id_seq" as integer START WITH 1;
 CREATE SEQUENCE "file_id_seq" as integer START WITH 1;
 CREATE SEQUENCE "performance_id_seq" as integer START WITH 1;
 CREATE SEQUENCE "user_id_seq" as integer START WITH 1;
-CREATE SEQUENCE "computational_id_seq" as integer START WITH 1;
+CREATE SEQUENCE "hardware_id_seq" as integer START WITH 1;
 
 
 -- tables
 CREATE TABLE dataflow(
 	id INTEGER DEFAULT NEXT VALUE FOR "public"."df_id_seq" NOT NULL,
+	uuid VARCHAR(36),	
 	tag VARCHAR(50) NOT NULL,
 	PRIMARY KEY ("id")
 );
@@ -112,33 +113,42 @@ CREATE TABLE attribute(
 	FOREIGN KEY ("extractor_id") REFERENCES extractor("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE TABLE dataflow_execution(
-	id INTEGER DEFAULT NEXT VALUE FOR "public"."exec_id_seq" NOT NULL,
-	tag VARCHAR(50) NOT NULL,
-	df_id INTEGER NOT NULL,
-	PRIMARY KEY ("tag"),
-	FOREIGN KEY ("df_id") REFERENCES dataflow("id") ON DELETE CASCADE ON UPDATE CASCADE
-);
-
 CREATE TABLE data_scientist(
 	id INTEGER DEFAULT NEXT VALUE FOR "public"."user_id_seq" NOT NULL,
-	name VARCHAR(50) NOT NULL,
-	email VARCHAR(50),
-	df_exec VARCHAR(50) NOT NULL,
-	PRIMARY KEY ("id"),
-	FOREIGN KEY ("df_exec") REFERENCES dataflow_execution("tag") ON DELETE CASCADE ON UPDATE CASCADE
+	uuid VARCHAR(36),	
+	email VARCHAR(50) NOT NULL,
+	PRIMARY KEY ("id")
 );
 
-CREATE TABLE computational_environment(
-	id INTEGER DEFAULT NEXT VALUE FOR "public"."computational_id_seq" NOT NULL,
-	information VARCHAR(50) NOT NULL,
-	df_exec VARCHAR(50) NOT NULL,
-	PRIMARY KEY ("id"),
-	FOREIGN KEY ("df_exec") REFERENCES dataflow_execution("tag") ON DELETE CASCADE ON UPDATE CASCADE
+CREATE TABLE hardware_info(
+	id INTEGER DEFAULT NEXT VALUE FOR "public"."hardware_id_seq" NOT NULL,
+	uuid VARCHAR(36),	
+	hostname VARCHAR(50) NOT NULL,
+	os VARCHAR(50),  
+	platform VARCHAR(50), 
+	architecture VARCHAR(50), 
+	processor VARCHAR(50) , 
+	gpus VARCHAR(50), 
+	in_container BOOLEAN,
+	PRIMARY KEY ("id")
+);
+
+CREATE TABLE dataflow_execution(
+	id INTEGER DEFAULT NEXT VALUE FOR "public"."exec_id_seq" NOT NULL,
+	uuid VARCHAR(36),	
+	tag VARCHAR(50) NOT NULL,
+	df_id INTEGER NOT NULL,
+	scientist_id INTEGER,
+	hardware_id INTEGER,
+	PRIMARY KEY ("tag"),
+	FOREIGN KEY ("df_id") REFERENCES dataflow("id") ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY ("scientist_id") REFERENCES data_scientist("id") ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY ("hardware_id") REFERENCES hardware_info("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE task(
 	id INTEGER DEFAULT NEXT VALUE FOR "public"."task_id_seq" NOT NULL,
+	uuid VARCHAR(36),	
 	identifier INTEGER NOT NULL,
 	df_version INTEGER NOT NULL,
 	df_exec VARCHAR(50) NOT NULL,
@@ -285,12 +295,68 @@ BEGIN
 	RETURN SELECT id FROM attribute WHERE ds_id=dds_id AND name=vname;
 END;
 
+CREATE FUNCTION insertScientist (v_email VARCHAR(50))
+RETURNS INTEGER
+BEGIN
+	DECLARE v_scientist_id INTEGER;
+    SELECT sc.id INTO v_scientist_id FROM data_scientist sc WHERE sc.email=v_email;
+    IF(v_scientist_id IS NULL) THEN
+    	#SELECT NEXT VALUE FOR "df_id_seq" into v_df_id;
+    	INSERT INTO data_scientist(email) VALUES (v_email);
+	END IF;
+	RETURN SELECT sc.id FROM data_scientist sc WHERE sc.email=v_email;
+END;
+
+
+CREATE FUNCTION insertHardwareInfo(
+    vhostname VARCHAR(50), 
+    vos VARCHAR(50), 
+    vplatform VARCHAR(50), 
+    varchitecture VARCHAR(50), 
+    vprocessor VARCHAR(50), 
+    vgpus VARCHAR(50), 
+    vinContainer BOOLEAN
+)
+RETURNS INTEGER
+BEGIN
+    DECLARE v_hw_id INTEGER;
+
+    SELECT id INTO v_hw_id FROM hardware_info
+    WHERE hostname = vhostname
+      AND os = vos
+      AND platform = vplatform
+      AND architecture = varchitecture
+      AND processor = vprocessor
+      AND gpus = vgpus
+      AND in_container = vinContainer;
+
+    IF (v_hw_id IS NULL) THEN
+        INSERT INTO hardware_info (
+            hostname, os, platform, architecture, processor,
+            gpus, in_container
+        ) VALUES (
+            vhostname, vos, vplatform, varchitecture, vprocessor,
+            vgpus, vinContainer
+        );
+	END IF;
+	RETURN SELECT id FROM hardware_info
+		WHERE hostname IS NOT DISTINCT FROM vhostname
+		AND os IS NOT DISTINCT FROM vos
+		AND platform IS NOT DISTINCT FROM vplatform
+		AND architecture IS NOT DISTINCT FROM varchitecture
+		AND processor IS NOT DISTINCT FROM vprocessor
+		AND gpus IS NOT DISTINCT FROM vgpus
+		AND in_container IS NOT DISTINCT FROM vinContainer;
+
+END;
+
+
 -- DROP FUNCTION insertDataflowExecution;
-CREATE FUNCTION insertDataflowExecution (etag VARCHAR(50),edf_id INTEGER)
+CREATE FUNCTION insertDataflowExecution (etag VARCHAR(50),edf_id INTEGER, esc_id INTEGER, ehw_id INTEGER)
 RETURNS INTEGER
 BEGIN
 	DECLARE id INTEGER;
-    INSERT INTO dataflow_execution(tag,df_id) VALUES (etag,edf_id);
+    INSERT INTO dataflow_execution(tag,df_id,scientist_id,hardware_id) VALUES (etag,edf_id,esc_id,ehw_id);
 	RETURN SELECT dfe.id FROM dataflow_execution dfe WHERE dfe.id=get_value_for('public', 'exec_id_seq')-1;
 END;
 

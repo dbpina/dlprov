@@ -33,6 +33,9 @@ setup(
     keywords='',
     packages=find_packages(exclude=['docs', 'tests*']),
     include_package_data=True,
+    package_data={               
+        "dfa_lib_python": ["*.json"],
+    },    
     author='Vinicius Campos',
     install_requires=install_requires,
     dependency_links=dependency_links,

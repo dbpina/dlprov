@@ -1,6 +1,5 @@
 import requests
 import os
-import json
 from .ProvenanceObject import ProvenanceObject
 from .transformation import Transformation
 
@@ -8,6 +7,8 @@ from .attribute import Attribute
 from .attribute_type import AttributeType
 from .set import Set
 from .set_type import SetType
+
+import json
 
 dfa_url = os.environ.get('DFA_URL', "http://localhost:22000/")
 
@@ -20,10 +21,11 @@ class Dataflow(ProvenanceObject):
         - tag (str): Dataflow tag.
         - transformations (list, optional): Dataflow transformations.
     """
-    def __init__(self, tag, predefined=False, transformations=[]):
+    def __init__(self, tag, predefined=False, email="", transformations=[]):
         ProvenanceObject.__init__(self, tag)
         self.transformations = transformations
         self.predefined = predefined
+        self.email = email
 
     @property
     def transformations(self):
@@ -60,6 +62,7 @@ class Dataflow(ProvenanceObject):
         if(predefined == True):
             assert isinstance(predefined, bool), \
                 "The parameter must must be a user."   
+
             tf1 = Transformation("LoadData")
             tf1_input = Set("iInputDataset", SetType.INPUT, 
                 [Attribute("DATASET_NAME", AttributeType.TEXT), 
@@ -67,23 +70,7 @@ class Dataflow(ProvenanceObject):
             tf1_output = Set("oLoadData", SetType.OUTPUT, 
                 [Attribute("DATASET_DIR", AttributeType.FILE)])
             tf1.set_sets([tf1_input, tf1_output])
-            self.add_transformation(tf1)
-
-            # tf1_1 = Transformation("RandomHorizontal")
-            # tf1_1_output = Set("oRandomHorizontal", SetType.OUTPUT, 
-            #     [Attribute("DATASET_DIR", AttributeType.FILE)])
-            # tf1_output.set_type(SetType.INPUT)
-            # tf1_output.dependency=tf1._tag
-            # tf1_1.set_sets([tf1_output, tf1_1_output])
-            # self.add_transformation(tf1_1)
-
-            # tf1_2 = Transformation("Normalize")
-            # tf1_2_output = Set("oNormalize", SetType.OUTPUT, 
-            #     [Attribute("DATASET_DIR", AttributeType.FILE)])
-            # tf1_1_output.set_type(SetType.INPUT)
-            # tf1_1_output.dependency=tf1_1._tag
-            # tf1_2.set_sets([tf1_1_output, tf1_2_output])
-            # self.add_transformation(tf1_2)            
+            self.add_transformation(tf1)        
 
             tf2 = Transformation("SplitData")
             tf2_input = Set("iSplitConfig", SetType.INPUT, 
@@ -137,7 +124,18 @@ class Dataflow(ProvenanceObject):
             tf3_output_model.set_type(SetType.INPUT)
             tf3_output_model.dependency=tf3._tag
             tf4.set_sets([tf2_test_output, tf3_output_model, tf4_output])
-            self.add_transformation(tf4)    
+            self.add_transformation(tf4)               
+  
+
+    @property
+    def email(self):
+        return self._email
+
+    @email.setter
+    def email(self, email):
+        assert isinstance(email, str), \
+            "The email must be in a string."
+        self._email= email        
 
     def save(self):
         """ Send a post request to the Dataflow Analyzer API to store
@@ -161,5 +159,4 @@ class Dataflow(ProvenanceObject):
 
         with open("file_attrs.json", "w") as f:
             json.dump(self.file_attributes, f)
-
-
+        

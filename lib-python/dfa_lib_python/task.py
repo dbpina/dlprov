@@ -54,7 +54,6 @@ class Task(ProvenanceObject):
         self.dfa_url = dfa_url
         self.start_time = None
         self.end_time = None
-        self.uuid = None
         # if isinstance(dependency, Task):
         #     dependency = Dependency([dependency._tag], [dependency._id])
         #     self._dependency = dependency.get_specification()
@@ -134,8 +133,6 @@ class Task(ProvenanceObject):
         """ Send a post request to the Dataflow Analyzer API to store the Task.
         """
         url = dfa_url + '/pde/task/json'
-        self.uuid = uuid.uuid4()
         message = self.get_specification()
-        print(message)
         r = requests.post(url, json=message)
         print(r.status_code)        

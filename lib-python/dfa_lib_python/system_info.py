@@ -11,9 +11,18 @@ def is_container():
     try:
         with open("/proc/1/cgroup", "rt") as f:
             content = f.read()
-            return "docker" in content or "kubepods" in content or "containerd" in content
-    except Exception:
-        return False
+            if any(x in content for x in ["docker", "kubepods", "containerd", "podman"]):
+                return True
+    except FileNotFoundError:
+        pass
+
+    # Also check control group info (for cgroups v2)
+    if os.path.exists("/.dockerenv"):
+        return True
+    if os.path.exists("/run/.containerenv"):
+        return True
+
+    return False
 
 def get_memory_limit():
     try:
@@ -78,11 +87,11 @@ def get_system_info():
         "platform": platform_desc,
         "architecture": arch,
         "processor": processor,
-        "ram_total_gb": ram_total,
-        "ram_limit_gb": ram_limit,
-        "disk_total_gb": disk_total_gb,
-        "disk_used_gb": disk_used_gb,
-        "disk_free_gb": disk_free_gb,
+        # "ram_total_gb": ram_total,
+        # "ram_limit_gb": ram_limit,
+        # "disk_total_gb": disk_total_gb,
+        # "disk_used_gb": disk_used_gb,
+        # "disk_free_gb": disk_free_gb,
         "gpus": gpus,
         "in_container": in_container
     }

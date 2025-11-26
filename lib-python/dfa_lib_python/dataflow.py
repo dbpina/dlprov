@@ -60,7 +60,7 @@ class Dataflow(ProvenanceObject):
         if(predefined == True):
             assert isinstance(predefined, bool), \
                 "The parameter must must be a user."   
-                
+
             tf1 = Transformation("LoadData")
             tf1_input = Set("iInputDataset", SetType.INPUT, 
                 [Attribute("DATASET_NAME", AttributeType.TEXT), 
@@ -68,7 +68,17 @@ class Dataflow(ProvenanceObject):
             tf1_output = Set("oLoadData", SetType.OUTPUT, 
                 [Attribute("DATASET_DIR", AttributeType.FILE)])
             tf1.set_sets([tf1_input, tf1_output])
-            self.add_transformation(tf1)
+            self.add_transformation(tf1)   
+
+            tf1_1 = Transformation("ApplyFilter")
+            tf1_1_input = Set("iFilter", SetType.INPUT, 
+                [Attribute("FILTER_TYPE", AttributeType.TEXT)])            
+            tf1_1_output = Set("oFilter", SetType.OUTPUT, 
+                [Attribute("PP_DATASET", AttributeType.FILE)])
+            tf1_output.set_type(SetType.INPUT)
+            tf1_output.dependency=tf1._tag
+            tf1_1.set_sets([tf1_1_input, tf1_output, tf1_1_output])
+            self.add_transformation(tf1_1)  
 
             # tf1_1 = Transformation("RandomHorizontal")
             # tf1_1_output = Set("oRandomHorizontal", SetType.OUTPUT, 
@@ -88,19 +98,25 @@ class Dataflow(ProvenanceObject):
 
             tf2 = Transformation("SplitData")
             tf2_input = Set("iSplitConfig", SetType.INPUT, 
-                [Attribute("TRAIN_RATIO", AttributeType.NUMERIC),
-                Attribute("VAL_RATIO", AttributeType.NUMERIC),
-                Attribute("TEST_RATIO", AttributeType.NUMERIC)])
+                [Attribute("TRAIN_SIZE", AttributeType.NUMERIC),
+                Attribute("VAL_SIZE", AttributeType.NUMERIC),
+                Attribute("TEST_SIZE", AttributeType.NUMERIC)])
             tf2_train_output = Set("oTrainSet", SetType.OUTPUT, 
-                [Attribute("TrainSet", AttributeType.FILE)])
+                [Attribute("TrainSetX", AttributeType.FILE),
+                Attribute("TrainSetY", AttributeType.FILE)])
             tf2_val_output = Set("oValSet", SetType.OUTPUT, 
-                [Attribute("ValSet", AttributeType.FILE)])            
+                [Attribute("ValSetX", AttributeType.FILE),
+                Attribute("ValSetY", AttributeType.FILE)])            
             tf2_test_output = Set("oTestSet", SetType.OUTPUT, 
-                [Attribute("TestSet", AttributeType.FILE)])
-            tf1_output.set_type(SetType.INPUT)
-            tf1_output.dependency=tf1._tag
-            tf2.set_sets([tf1_output, tf2_input, tf2_train_output, tf2_val_output, tf2_test_output])            
-            self.add_transformation(tf2)
+                [Attribute("TestSetX", AttributeType.FILE),
+                Attribute("TestSetY", AttributeType.FILE)])
+            # tf1_output.set_type(SetType.INPUT)
+            # tf1_output.dependency=tf1._tag
+            tf1_1_output.set_type(SetType.INPUT)
+            tf1_1_output.dependency=tf1_1._tag            
+            #tf2.set_sets([tf1_output, tf2_input, tf2_train_output, tf2_val_output, tf2_test_output])            
+            tf2.set_sets([tf1_1_output, tf2_input, tf2_train_output, tf2_val_output, tf2_test_output])                        
+            self.add_transformation(tf2) 
 
             tf3 = Transformation("Train")
             tf3_input = Set("iTrain", SetType.INPUT, 
@@ -156,6 +172,5 @@ class Dataflow(ProvenanceObject):
             the dataflow.
         """
         url = dfa_url + '/pde/dataflow/json'
-        print(self.get_specification())
         r = requests.post(url, json=self.get_specification())  
         print(r.status_code)

@@ -19,9 +19,9 @@ auth_info = {
 
 driver = GraphDatabase.driver(f"bolt://{NEO4J_HOST}:{NEO4J_BOLT_PORT}", auth=(NEO4J_USER, NEO4J_PASS))
 
-def create_database(db_name):
-    with driver.session() as session:
-        session.run(f"CREATE DATABASE {db_name}")
+# def create_database(db_name):
+#     with driver.session() as session:
+#         session.run(f"CREATE DATABASE {db_name}")
 
 prov_api = ProvDb(adapter=Neo4jAdapter, auth_info=auth_info)
 
@@ -40,10 +40,13 @@ if __name__ == "__main__":
 
     output_dir = os.path.join(os.getcwd(), "output")
 
-    create_database(re.sub(r'[^a-zA-Z0-9_.-]', '', args.file_name.replace('-', '').replace('.','')))
+    #create_database(re.sub(r'[^a-zA-Z0-9_.-]', '', args.file_name.replace('-', '').replace('.','')))
 
     if 'json' not in args.file_name:
         args.file_name = args.file_name + '.json'
+        args.file_name = f'{args.file_name}'.replace(" ", "_")
+        args.file_name = re.sub(r"[/:]", "-", args.file_name)  # Replace slashes and colons
+        args.file_name = re.sub(r"[^\w\-.]", "", args.file_name)        
 
     provn_file_path = os.path.join(output_dir, args.file_name)
 

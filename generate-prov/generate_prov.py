@@ -64,7 +64,7 @@ def run(args_list=None):
     full_filename_json = os.path.join(output_dir, f'{w3c_name}.json')  
 
     dot_file = prov_to_dot(prov_document)
-    #dot_file.write_png(full_filename) 
+    dot_file.write_png(full_filename) 
     dot_file.write_pdf(full_filename_pdf) 
 
     prov_n_content = prov_document.serialize(format='provn')
@@ -74,8 +74,6 @@ def run(args_list=None):
     prov_n_content = prov_document.serialize(format='json')
     with open(full_filename_json, 'w') as f:
         f.write(prov_n_content)                
-
-import uuid
 
 def ensure_table_uuid(cursor, conn, schema, table, id_column, id_value, extra_where_clause=None, extra_params=None):
     """
@@ -166,6 +164,7 @@ def generate_each_execution(df_tag, df_exec, prov_df_exec_activity, cursor, conn
     #with open("output_log.txt", "w") as file:
     for ds_tag in ds_tags:
         #file.write(f"Processing ds_tag: {ds_tag}\n")
+
         query = f"SELECT name FROM \"public\".attribute WHERE ds_id = {res[ds_tag]};"
         cursor.execute(query)
         #attribute_list = [row[0] for row in cursor.fetchall()]
@@ -212,7 +211,6 @@ def generate_each_execution(df_tag, df_exec, prov_df_exec_activity, cursor, conn
                     f"AND {dts[next_dt_id]}_task_id IN ({next_task_ids});"
                 )
                 my_type = "both"
-
             cursor.execute(query)
             rows_data = cursor.fetchall()
 
@@ -252,7 +250,14 @@ def generate_each_execution(df_tag, df_exec, prov_df_exec_activity, cursor, conn
                     prov_document.wasGeneratedBy(prov_entity, the_activities_dict[generated_task])
                 elif my_type == "both":
                     prov_document.used(the_activities_dict[used_task], prov_entity)
-                    prov_document.wasGeneratedBy(prov_entity, the_activities_dict[generated_task])     
+                    prov_document.wasGeneratedBy(prov_entity, the_activities_dict[generated_task]) 
+
+                if ds_tag == "ofilter":
+                    prov_document.wasDerivedFrom(prov_entity, entities_dict["oloaddata"][0])  
+                    
+                if ds_tag == "otrainset" or ds_tag == "ovalset" or ds_tag == "otestset":
+                    if "applyfilter" in dt_tags:
+                        prov_document.wasDerivedFrom(prov_entity, entities_dict["ofilter"][0])  
 
 
 
@@ -293,7 +298,7 @@ def generate_w3c_for_all_runs(df_tag, cursor, conn, prov_document):
         user_attributes = {}
         hw_attributes = {}
 
-        query_user = f"SELECT * FROM data_scientist WHERE id = (SELECT scientist_id FROM \"public\".dataflow_execution WHERE tag = '{df_exec}');"
+        query_user = f"SELECT * FROM \"public\".data_scientist WHERE id = (SELECT scientist_id FROM \"public\".dataflow_execution WHERE tag = '{df_exec}');"
         cursor.execute(query_user)
         row_user = cursor.fetchone()
 
@@ -312,7 +317,7 @@ def generate_w3c_for_all_runs(df_tag, cursor, conn, prov_document):
             prov_document.association(df_exec_activity_id, user_agent)
 
 
-        query_hw = f"SELECT * FROM hardware_info WHERE id = (SELECT hardware_id FROM \"public\".dataflow_execution WHERE tag = '{df_exec}');"
+        query_hw = f"SELECT * FROM \"public\".hardware_info WHERE id = (SELECT hardware_id FROM \"public\".dataflow_execution WHERE tag = '{df_exec}');"
         cursor.execute(query_hw)
         row_hw = cursor.fetchone()
 
@@ -363,7 +368,7 @@ def generate_w3c_for_specific_execution(df_exec, cursor, conn, prov_document):
     user_attributes = {}
     hw_attributes = {}
 
-    query_user = f"SELECT * FROM data_scientist WHERE id = (SELECT scientist_id FROM \"public\".dataflow_execution WHERE tag = '{df_exec}');"
+    query_user = f"SELECT * FROM \"public\".data_scientist WHERE id = (SELECT scientist_id FROM \"public\".dataflow_execution WHERE tag = '{df_exec}');"
     cursor.execute(query_user)
     row_user = cursor.fetchone()
 
@@ -373,10 +378,11 @@ def generate_w3c_for_specific_execution(df_exec, cursor, conn, prov_document):
             user_attributes["dlprov:" + col] = val
             if col == 'id':
                 uuid_user = ensure_table_uuid(cursor, conn, "public", "data_scientist", "id", val)            
-    entity_user_id = 'dlprov:' + str(uuid_user)
-    user_agent = prov_document.agent(entity_user_id, other_attributes=user_attributes)  
+        entity_user_id = 'dlprov:' + str(uuid_user)
+        user_agent = prov_document.agent(entity_user_id, other_attributes=user_attributes)  
+        prov_document.association(df_exec_activity_id, user_agent)
 
-    query_hw = f"SELECT * FROM hardware_info WHERE id = (SELECT hardware_id FROM \"public\".dataflow_execution WHERE tag = '{df_exec}');"
+    query_hw = f"SELECT * FROM \"public\".hardware_info WHERE id = (SELECT hardware_id FROM \"public\".dataflow_execution WHERE tag = '{df_exec}');"
     cursor.execute(query_hw)
     row_hw = cursor.fetchone()
 
@@ -386,12 +392,10 @@ def generate_w3c_for_specific_execution(df_exec, cursor, conn, prov_document):
             hw_attributes["dlprov:" + col] = val
             if col == 'id':
                 uuid_hw = ensure_table_uuid(cursor, conn, "public", "hardware_info", "id", val)
-    entity_hw_id = 'dlprov:' + str(uuid_hw)
-    hw_agent = prov_document.agent(entity_hw_id, other_attributes=hw_attributes) 
+        entity_hw_id = 'dlprov:' + str(uuid_hw)
+        hw_agent = prov_document.agent(entity_hw_id, other_attributes=hw_attributes) 
+        prov_document.association(df_exec_activity_id, hw_agent)      
 
-    prov_document.association(df_exec_activity_id, user_agent)
-
-    prov_document.association(df_exec_activity_id, hw_agent)      
 
     generate_each_execution(df_tag, df_exec, prov_df_exec_activity, cursor, conn, prov_document)        
 

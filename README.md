@@ -211,20 +211,18 @@ Then, to view available tables, use:
 For specific data, you can submit queries like:
 
 ```
-SELECT * FROM itrainmodel; to see the hyperparameters.
+SELECT * FROM itrain; to see the hyperparameters.
 ```
 
 ```
-SELECT * FROM otrainmodel; to view training metrics.
+SELECT * FROM otrain; to view training metrics.
 ```
 
 ```
-SELECT * FROM otestmodel; to see test metrics.
+SELECT * FROM otest; to see test metrics.
 ```
 
 #### Generating the **provenance document** for your chosen deep learning model involves identifying the specific execution and running a generation script based on the **W3C PROV standard**.
-
-Here is the improved Markdown guide:
 
 
 ## Generating the DL Model Provenance Document

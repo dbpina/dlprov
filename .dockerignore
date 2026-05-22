@@ -1,0 +1,9 @@
+.git/
+.gitattributes
+.gitignore
+**/.DS_Store
+**/__pycache__/
+**/*.pyc
+output/
+DfAnalyzer/data/
+DfAnalyzer/target/DfAnalyzer-1.0.jar.original

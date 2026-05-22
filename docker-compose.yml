@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  treinamento-com-prov:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: dlprov-full
+    container_name: treinamento-com-prov
+    command: python Example/filter-prov.py
+    deploy:
+      resources:
+        limits:
+          cpus: "4"
+          memory: 8G
+        reservations:
+          cpus: "2"
+          memory: 4G
+    ports:
+      - 50000:50000
+      - 7474:7474
+      - 7687:7687
+    stdin_open: true
+    tty: true
+
+  treinamento-sem-prov:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.simple
+    image: dlprov-simple
+    container_name: treinamento-sem-prov
+    deploy:
+      resources:
+        limits:
+          cpus: "4"
+          memory: 8G
+        reservations:
+          cpus: "2"
+          memory: 4G
+    stdin_open: true
+    tty: true

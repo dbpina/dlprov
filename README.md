@@ -7,14 +7,13 @@ DLProv is a provenance-centric service to support Deep Learning (DL) life-cycle 
 2. [Short Video](#short-video)
 3. [Software requirements](#software-requirements)
 4. [Installation](#installation)
-5. [Running example to play with provenance](#play)
-6. [Running example to capture default provenance in DL Training](#training)
-7. [Running example to capture customized provenance in DL life cycle](#custom)
-8. [Exporting the provenance graph for the whole DL life cycle](#export)
-9. [Querying the provenance graph with Neo4J](#neo4j)
-10. [DLProv Origins](#origins)
+5. [Running example to play with provenance](#running-example-to-play-with-provenance)
+6. [Running example to capture default provenance in DL Training](#running-example-to-capture-default-provenance-in-dl-training)
+7. [Running example to capture customized provenance in DL life cycle](#running-example-to-capture-customized-provenance-in-dl-life-cycle)
+8. [Exporting the provenance graph for the whole DL life cycle](#exporting-the-provenance-graph-for-the-whole-dl-life-cycle)
+9. [Querying the provenance graph with Neo4J](#querying-the-provenance-graph-with-neo4j)
+10. [DLProv origins](#dlprov-origins)
 11. [Publications](#publications)
-
 
 ## [Overview](#overview)
 
@@ -45,7 +44,7 @@ The following list of software has to be configured/installed for running a DL m
 
 ## [Installation](#installation)
 
-## [Running example to play with provenance](#play)
+## [Running example to play with provenance](#running-example-to-play-with-provenance)
 
 We provide a pre-built Docker container image that includes all necessary dependencies and data from this repository, ensuring a consistent and reproducible environment for running the example.
 
@@ -169,7 +168,7 @@ SELECT * FROM otest; to see test metrics.
 ```
 
 
-## [Running example to capture default provenance in DL Training](#training)
+## [Running example to capture default provenance in DL Training](#running-example-to-capture-default-provenance-in-dl-training)
 
 The DLProv has a few predefined hyperparameters (e.g. optimizer, learning rate, number of epochs, number of layers, etc.) and metrics (e.g. loss, accuracy, elapsed time) to be captured. In the case that these hyperparameters and metrics are enough, the user has to set the attribute “hyperparameters” as True, and the library will take care of it. It's important to set a tag to identify the workflow and associate it with the provenance data, e.g. hyperparameters. This method captures provenance data as the deep learning workflow executes and sends them to the provenance database managed by MonetDB. As the data reaches the database, it can be analyzed through the Dataflow Viewer (DfViewer), Query Interface (QI), and Query Dashboard (QP). The data received by the provenance method are defined by the user in the source code of the DNN application, as follows:
 
@@ -197,10 +196,10 @@ else:
 
 In case there is an adaptation of the hyperparameters during training (e.g., an update of the learning rate), that is, the use of methods such as LearningRateScheduler offered by Keras, the hyperparameter’s values are updated, therefore, the adaptation should be registered for further analysis. To capture these data, the user should add code for this specific transformation.
 
-## [Running example to capture customized provenance in DL life cycle](#custom)
+## [Running example to capture customized provenance in DL life cycle](#running-example-to-capture-customized-provenance-in-dl-life-cycle)
 
 
-## [Exporting the provenance graph for the whole DL life cycle](#export)
+## [Exporting the provenance graph for the whole DL life cycle](#exporting-the-provenance-graph-for-the-whole-dl-life-cycle)
 
 After exploring the provenance data in MonetDB, the next step is to select one of the analyzed runs as if it were the chosen model for deployment in a production environment. This choice should be based on the results observed in the queries performed, such as hyperparameter values, performance metrics (e.g., loss and accuracy), use of preprocessing, scientist responsible for the run, and the computational environment used.
 
@@ -247,7 +246,7 @@ Replace <insert_file_name.png> with the actual name of your PNG file. Replace </
 
 b. After executing the command, navigate to the specified target directory on your host to view the PNG file.
 
-## [Querying the provenance graph with Neo4J](#neo4j)
+## [Querying the provenance graph with Neo4J](#querying-the-provenance-graph-with-neo4j)
 
 The files generated in the previous step (e.g., `.provn`, `.json`, `.pdf`) all contain the same provenance information but are represented in different formats. An important step for verification and detailed analysis is to leverage the **W3C PROV Validator** and the **Neo4j graph database**.
 
@@ -457,7 +456,7 @@ Both steps, the specification of the transformation and the activity definition 
 
 To watch the video, please, click [here](https://www.youtube.com/watch?v=QOZY2CQfXJ8). -->
 
-## [DLProv Origins](#origins)
+## [DLProv origins](#dlprov-origins)
 
 This project, called DLProv, is part of my DSc research in the Program of Systems and Computer Science (PESC), COPPE, at the Federal University of Rio de Janeiro (UFRJ).
 

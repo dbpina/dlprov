@@ -19,7 +19,7 @@ DLProv is a provenance-centric service to support Deep Learning (DL) life-cycle 
 
 A DL life cycle involves several data transformations, such as performing data pre-processing, defining datasets to train and test a deep neural network (DNN), and training and evaluating the DL model. Choosing a final model requires DL model selection, which involves analyzing data from several training configurations (e.g. hyperparameters and DNN architectures). We have understood that tracing training data back to pre-processing operations can provide insights into the model selection step. However, there are challenges in providing an integration of the provenance of these different steps. Therefore, we decided to integrate these steps. DLProv is a prototype for provenance data integration using different capture solutions while maintaining DNNProv capabilities.
 
-**This repository provides a Docker container for DLProv, which can be found in step [Running an Example in a Docker Environment](#running-an-example-in-a-docker-environment).**
+**This repository provides a Docker container for DLProv, which can be found in step [Running example to play with provenance](#running-example-to-play-with-provenance).**
 
 ## [Short Video](#short-video)
 
